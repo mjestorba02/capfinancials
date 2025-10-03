@@ -125,7 +125,7 @@ adminLayout($children);
 ?>
 
 <script>
-const apiUrl = "https://financial.health-ease-hospital.com/prefect/api/collections.php";
+const apiUrl = "https://financial.health-ease-hospital.com/api/collections.php";
 
 // ===================== LOAD COLLECTIONS =====================
 async function loadCollections() {

@@ -30,7 +30,7 @@ $children = '
 
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
-const apiUrl = "https://financial.health-ease-hospital.com/prefect/api/budget_requests_api.php";
+const apiUrl = "https://financial.health-ease-hospital.com/api/budget_requests_api.php";
 
 // Load table data
 async function loadRequests() {

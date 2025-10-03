@@ -112,7 +112,7 @@ $children = '
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
-  const apiUrl = "https://financial.health-ease-hospital.com/prefect/api/payments_api.php";
+  const apiUrl = "https://financial.health-ease-hospital.com/api/payments_api.php";
 
   // ===================== TOAST FUNCTION =====================
   function showToast(message, type) {

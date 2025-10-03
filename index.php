@@ -166,7 +166,7 @@
     const password = document.getElementById("regPassword").value.trim();
 
     try {
-  const res = await fetch("https://financial.health-ease-hospital.com/prefect/api/users.php", {
+  const res = await fetch("https://financial.health-ease-hospital.com/api/users.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password })
@@ -189,7 +189,7 @@
     const password = document.getElementById("loginPassword").value.trim();
 
     try {
-  const res = await fetch("https://financial.health-ease-hospital.com/prefect/api/auth.php", {
+  const res = await fetch("https://financial.health-ease-hospital.com/api/auth.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })
@@ -215,7 +215,7 @@
     const otp = document.getElementById("otpCode").value.trim();
 
     try {
-  const res = await fetch("https://financial.health-ease-hospital.com/prefect/api/verify_otp.php", {
+  const res = await fetch("https://financial.health-ease-hospital.com/api/verify_otp.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ otp })
