@@ -76,7 +76,7 @@ adminLayout($children);
   // Fetch totals from API
   async function loadReportData() {
     try {
-      const res = await fetch("http://localhost/prefect/api/totals_api.php");
+      const res = await fetch("https://financial.health-ease-hospital.com/prefect/api/totals_api.php");
       const data = await res.json();
 
       // Update Totals
@@ -145,7 +145,7 @@ adminLayout($children);
   // Export as CSV
   async function exportReports() {
     try {
-      const res = await fetch("http://localhost/prefect/api/totals_api.php");
+      const res = await fetch("https://financial.health-ease-hospital.com/prefect/api/totals_api.php");
       const data = await res.json();
 
       let csvContent = "Category,Count\n";

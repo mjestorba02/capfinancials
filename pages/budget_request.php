@@ -109,7 +109,7 @@ adminLayout($children);
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
-const apiUrl = "http://localhost/prefect/api/budget_requests_api.php";
+const apiUrl = "https://financial.health-ease-hospital.com/prefect/api/budget_requests_api.php";
 
 // Toast function
 function showToast(message, type) {

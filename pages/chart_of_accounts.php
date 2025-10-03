@@ -210,7 +210,7 @@ adminLayout($children);
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
 <script>
-  const API_URL = "http://localhost/prefect/api/chart_of_accounts_api.php";
+  const API_URL = "https://financial.health-ease-hospital.com/prefect/api/chart_of_accounts_api.php";
 
   // ===================== TOAST FUNCTION =====================
   function showToast(message, type) {

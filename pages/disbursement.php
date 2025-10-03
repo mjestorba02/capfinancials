@@ -141,8 +141,8 @@ adminLayout($children);
 ?>
 
 <script>
-const apiUrl = "http://localhost/prefect/api/disbursements_api.php";
-const vendorApi = "http://localhost/prefect/api/vendors_api.php";
+const apiUrl = "https://financial.health-ease-hospital.com/prefect/api/disbursements_api.php";
+const vendorApi = "https://financial.health-ease-hospital.com/prefect/api/vendors_api.php";
 const tableBody = document.getElementById("disbursementBody");
 const modal = document.getElementById("disbursementModal");
 const viewModal = document.getElementById("viewModal");

@@ -241,7 +241,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Load notifications
   async function loadNotifications() {
-  const res = await fetch("http://localhost/prefect/api/notifications_api.php?action=get_notifications");
+  const res = await fetch("https://financial.health-ease-hospital.com/prefect/api/notifications_api.php?action=get_notifications");
     const data = await res.json();
 
     if (data.success) {
@@ -271,7 +271,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Mark as read
   window.markRead = async function(id) {
     try {
-      const res = await fetch("http://localhost/prefect/api/notifications_api.php?action=mark_read", {
+      const res = await fetch("https://financial.health-ease-hospital.com/prefect/api/notifications_api.php?action=mark_read", {
         method: "POST",
         body: new URLSearchParams({ id })
       });
@@ -292,7 +292,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Delete single notification
   window.deleteNotif = async function(id) {
     try {
-      const res = await fetch("http://localhost/prefect/api/notifications_api.php?action=delete", {
+      const res = await fetch("https://financial.health-ease-hospital.com/prefect/api/notifications_api.php?action=delete", {
         method: "POST",
         body: new URLSearchParams({ id })
       });
@@ -314,7 +314,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (markAllBtn && typeof markAllBtn.addEventListener === 'function') {
     markAllBtn.addEventListener("click", async () => {
       try {
-        await fetch("http://localhost/prefect/api/notifications_api.php?action=mark_read_all", { method: "POST" });
+        await fetch("https://financial.health-ease-hospital.com/prefect/api/notifications_api.php?action=mark_read_all", { method: "POST" });
         Toastify({
           text: "All notifications marked as read",
           duration: 3000,
@@ -425,11 +425,11 @@ function toggleReceivableDropdown() {
 
 async function logoutUser() {
     try {
-  const res = await fetch('http://localhost/prefect/api/logout.php', { method: 'POST' });
+  const res = await fetch('https://financial.health-ease-hospital.com/prefect/api/logout.php', { method: 'POST' });
         const data = await res.json();
         Toastify({ text: data.message || 'Logged out', duration: 3000 }).showToast();
         if (data.status === 'success') {
-            setTimeout(() => window.location.href = 'http://localhost/prefect', 1000);
+            setTimeout(() => window.location.href = 'https://financial.health-ease-hospital.com/prefect', 1000);
         }
     } catch (e) {
         console.error(e);
