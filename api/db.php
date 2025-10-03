@@ -3,7 +3,7 @@
 
 $host = "localhost";       // Database host
 $user = "fina_admin";            // Database username
-$password = "C@c2lRE9BVCOUzv1";            // Database password
+$password = "financial123";            // Database password
 $dbname = "fina_financial_hostipal"; // Database name
 
 // $host = "localhost";       // Database host
