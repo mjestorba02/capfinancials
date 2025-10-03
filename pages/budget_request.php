@@ -31,7 +31,7 @@ $children = '
         <thead>
           <tr class="bg-slate-100 text-left text-slate-600 uppercase text-xs">
             <th class="px-4 py-3">Request ID</th>
-            <th class="px-4 py-3">Department</th>
+            <th class="px-4 py-3">Category</th>
             <th class="px-4 py-3">Purpose</th>
             <th class="px-4 py-3">Amount</th>
             <th class="px-4 py-3">Status</th>
@@ -52,7 +52,7 @@ $children = '
     <h2 class="text-xl font-semibold mb-4">New Budget Request</h2>
     <form id="requestForm" class="space-y-4">
       <div>
-        <label class="block text-sm font-medium text-slate-600">Department</label>
+        <label class="block text-sm font-medium text-slate-600">Category</label>
         <input type="text" id="department" class="w-full border rounded-lg px-3 py-2 mt-1" required>
       </div>
       <div>
@@ -109,7 +109,7 @@ adminLayout($children);
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
-const apiUrl = "https://financial.health-ease-hospital.com/prefect/api/budget_requests_api.php";
+const apiUrl = "http://localhost/prefect/api/budget_requests_api.php";
 
 // Toast function
 function showToast(message, type) {
@@ -239,7 +239,7 @@ function openApproveModal(request) {
   approveRequestData = request;
 
   document.getElementById("approveContent").innerHTML = `
-    <p><b>Department:</b> ${request.department}</p>
+    <p><b>Category:</b> ${request.department}</p>
     <p><b>Purpose:</b> ${request.purpose}</p>
     <p><b>Amount:</b> ₱${parseFloat(request.amount).toLocaleString()}</p>
     <p><b>Status:</b> Pending → <span class="text-green-600">Approved</span></p>

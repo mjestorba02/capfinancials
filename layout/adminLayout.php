@@ -40,35 +40,40 @@ function adminLayout($children) {
         <!-- Navigation -->
         <nav class="flex flex-col space-y-4 text-xl w-full">
 
+          <!-- Reports -->
+          <a href="reports.php" class="flex items-center space-x-3 px-2 py-2 rounded <?php echo ($currentPage=='reports.php') ? 'bg-orange-500 text-white' : 'hover:bg-slate-800'; ?>">
+            <i class='bx bx-grid-alt text-lg'></i>
+            <span class="text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">Dashboard</span>
+          </a>
+
          <!-- Collections -->
           <a href="collections.php" class="flex items-center space-x-3 px-2 py-2 rounded <?php echo ($currentPage=='collections.php') ? 'bg-orange-500 text-white' : 'hover:bg-slate-800'; ?>">
             <i class='bx bx-credit-card text-lg'></i>
             <span class="text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">Collections</span>
           </a>
 
-           <!-- Accounts Receivable with Dropdown -->
           <div class="w-full">
-            <button onclick="toggleReceivableDropdown()" class="flex items-center justify-between w-full px-2 py-2 hover:text-orange-400 
-              <?php echo ($currentPage=='sales_invoices.php' || $currentPage=='accounts_receivable.php') ? 'text-orange-500' : ''; ?>">
+            <button onclick="toggleBudgetDropdown()" class="flex items-center justify-between w-full px-2 py-2 hover:text-orange-400 <?php echo ($currentPage=='budget_planning.php' || $currentPage=='budget_allocation.php' || $currentPage=='budget_request.php') ? 'text-orange-500' : ''; ?>">
               <span class="flex items-center space-x-3">
-                <i class='bx bx-download text-lg'></i>
-                <span class="text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">Accounts Receivable</span>
+                <i class='bx bx-pie-chart-alt-2 text-lg'></i>
+                <span class="text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">Budget Management</span>
               </span>
               <i class='bx bx-chevron-down opacity-0 group-hover:opacity-100 transition-opacity duration-200'></i>
             </button>
-
-            <!-- Dropdown -->
-            <div id="receivableDropdown" class="ml-8 mt-1 hidden flex-col space-y-2">
-              <a href="sales_invoices.php" class="block px-2 py-1 text-sm rounded 
-                <?php echo ($currentPage=='sales_invoices.php') ? 'bg-orange-500 text-white' : 'hover:bg-slate-800'; ?>">
-                Sales Invoices
+            <div id="budgetDropdown" class="ml-8 mt-1 hidden flex-col space-y-2">
+              <a href="budget_request.php" class="block px-2 py-1 text-sm rounded <?php echo ($currentPage=='budget_request.php') ? 'bg-orange-500 text-white' : 'hover:bg-slate-800'; ?>">
+                Budget Request
               </a>
+              <a href="budget_allocationandplanning.php" class="block px-2 py-1 text-sm rounded <?php echo ($currentPage=='budget_allocationandplanning.php') ? 'bg-orange-500 text-white' : 'hover:bg-slate-800'; ?>">
+                Budget Planning & Allocation
+              </a>
+              
             </div>
           </div>
 
           <!-- General Ledger with Dropdown -->
           <div class="w-full">
-            <button onclick="toggleDropdown()" class="flex items-center justify-between w-full px-2 py-2 hover:text-orange-400 <?php echo ($currentPage=='general_ledger.php' || $currentPage=='chart_of_accounts.php') ? 'text-orange-500' : ''; ?>">
+            <button onclick="toggleDropdown()" class="flex items-center justify-between w-full px-2 py-2 hover:text-orange-400 <?php echo ($currentPage=='general_ledger.php' || $currentPage=='chart_of_accounts.php' || $currentPage=='journal_entry.php') ? 'text-orange-500' : ''; ?>">
               <span class="flex items-center space-x-3">
                 <i class='bx bx-book text-lg'></i>
                 <span class="text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">General Ledger</span>
@@ -79,10 +84,14 @@ function adminLayout($children) {
               <a href="chart_of_accounts.php" class="block px-2 py-1 text-sm rounded <?php echo ($currentPage=='chart_of_accounts.php') ? 'bg-orange-500 text-white' : 'hover:bg-slate-800'; ?>">
                 Chart of Accounts
               </a>
+
+              <a href="journal_entry.php" class="block px-2 py-1 text-sm rounded <?php echo ($currentPage=='journal_entry.php') ? 'bg-orange-500 text-white' : 'hover:bg-slate-800'; ?>">
+                Journal Entry
+              </a>
             </div>
           </div>
 
-         <!-- Accounts Payable with Dropdown -->
+          <!-- Accounts Payable with Dropdown -->
           <div class="w-full">
             <button onclick="togglePayableDropdown()" class="flex items-center justify-between w-full px-2 py-2 hover:text-orange-400 
               <?php echo ($currentPage=='invoices.php' || $currentPage=='payments.php' || $currentPage=='accounts_payable.php') ? 'text-orange-500' : ''; ?>">
@@ -106,52 +115,31 @@ function adminLayout($children) {
             </div>
           </div>
 
+           <!-- Accounts Receivable with Dropdown -->
+          <div class="w-full">
+            <button onclick="toggleReceivableDropdown()" class="flex items-center justify-between w-full px-2 py-2 hover:text-orange-400 
+              <?php echo ($currentPage=='sales_invoices.php' || $currentPage=='accounts_receivable.php') ? 'text-orange-500' : ''; ?>">
+              <span class="flex items-center space-x-3">
+                <i class='bx bx-download text-lg'></i>
+                <span class="text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">Accounts Receivable</span>
+              </span>
+              <i class='bx bx-chevron-down opacity-0 group-hover:opacity-100 transition-opacity duration-200'></i>
+            </button>
 
-         
-
-
-         
+            <!-- Dropdown -->
+            <div id="receivableDropdown" class="ml-8 mt-1 hidden flex-col space-y-2">
+              <a href="sales_invoices.php" class="block px-2 py-1 text-sm rounded 
+                <?php echo ($currentPage=='sales_invoices.php') ? 'bg-orange-500 text-white' : 'hover:bg-slate-800'; ?>">
+                Sales Invoices
+              </a>
+            </div>
+          </div>
 
           <!-- Disbursement -->
           <a href="disbursement.php" class="flex items-center space-x-3 px-2 py-2 rounded <?php echo ($currentPage=='disbursement.php') ? 'bg-orange-500 text-white' : 'hover:bg-slate-800'; ?>">
             <i class='bx bx-wallet text-lg'></i>
             <span class="text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">Disbursement</span>
           </a>
-
-         <!-- Budget Management with Dropdown -->
-          <div class="w-full">
-            <button onclick="toggleBudgetDropdown()" class="flex items-center justify-between w-full px-2 py-2 hover:text-orange-400 <?php echo ($currentPage=='budget_planning.php' || $currentPage=='budget_allocation.php' || $currentPage=='budget_request.php') ? 'text-orange-500' : ''; ?>">
-              <span class="flex items-center space-x-3">
-                <i class='bx bx-pie-chart-alt-2 text-lg'></i>
-                <span class="text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">Budget Management</span>
-              </span>
-              <i class='bx bx-chevron-down opacity-0 group-hover:opacity-100 transition-opacity duration-200'></i>
-            </button>
-            <div id="budgetDropdown" class="ml-8 mt-1 hidden flex-col space-y-2">
-              <a href="budget_request.php" class="block px-2 py-1 text-sm rounded <?php echo ($currentPage=='budget_request.php') ? 'bg-orange-500 text-white' : 'hover:bg-slate-800'; ?>">
-                Budget Request
-              </a>
-              <a href="budget_planning.php" class="block px-2 py-1 text-sm rounded <?php echo ($currentPage=='budget_planning.php') ? 'bg-orange-500 text-white' : 'hover:bg-slate-800'; ?>">
-                Budget Planning
-              </a>
-              <a href="budget_allocation.php" class="block px-2 py-1 text-sm rounded <?php echo ($currentPage=='budget_allocation.php') ? 'bg-orange-500 text-white' : 'hover:bg-slate-800'; ?>">
-                Budget Allocation
-              </a>
-              
-            </div>
-          </div>
-
-          <a href="journal_entry.php" class="flex items-center space-x-3 px-2 py-2 rounded <?php echo ($currentPage=='journal_entry.php') ? 'bg-orange-500 text-white' : 'hover:bg-slate-800'; ?>">
-            <i class='bx bx-notepad text-lg'></i>
-            <span class="text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">Journal Entry</span>
-          </a>
-
-          <!-- Reports -->
-          <a href="reports.php" class="flex items-center space-x-3 px-2 py-2 rounded <?php echo ($currentPage=='reports.php') ? 'bg-orange-500 text-white' : 'hover:bg-slate-800'; ?>">
-            <i class='bx bx-bar-chart text-lg'></i>
-            <span class="text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">Reports</span>
-          </a>
-
 
         </nav>
       </div>
@@ -253,7 +241,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Load notifications
   async function loadNotifications() {
-  const res = await fetch("https://financial.health-ease-hospital.com/prefect/api/notifications_api.php?action=get_notifications");
+  const res = await fetch("http://localhost/prefect/api/notifications_api.php?action=get_notifications");
     const data = await res.json();
 
     if (data.success) {
@@ -283,7 +271,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Mark as read
   window.markRead = async function(id) {
     try {
-      const res = await fetch("https://financial.health-ease-hospital.com/prefect/api/notifications_api.php?action=mark_read", {
+      const res = await fetch("http://localhost/prefect/api/notifications_api.php?action=mark_read", {
         method: "POST",
         body: new URLSearchParams({ id })
       });
@@ -304,7 +292,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Delete single notification
   window.deleteNotif = async function(id) {
     try {
-      const res = await fetch("https://financial.health-ease-hospital.com/prefect/api/notifications_api.php?action=delete", {
+      const res = await fetch("http://localhost/prefect/api/notifications_api.php?action=delete", {
         method: "POST",
         body: new URLSearchParams({ id })
       });
@@ -326,7 +314,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (markAllBtn && typeof markAllBtn.addEventListener === 'function') {
     markAllBtn.addEventListener("click", async () => {
       try {
-        await fetch("https://financial.health-ease-hospital.com/prefect/api/notifications_api.php?action=mark_read_all", { method: "POST" });
+        await fetch("http://localhost/prefect/api/notifications_api.php?action=mark_read_all", { method: "POST" });
         Toastify({
           text: "All notifications marked as read",
           duration: 3000,
@@ -437,11 +425,11 @@ function toggleReceivableDropdown() {
 
 async function logoutUser() {
     try {
-  const res = await fetch('https://financial.health-ease-hospital.com/prefect/api/logout.php', { method: 'POST' });
+  const res = await fetch('http://localhost/prefect/api/logout.php', { method: 'POST' });
         const data = await res.json();
         Toastify({ text: data.message || 'Logged out', duration: 3000 }).showToast();
         if (data.status === 'success') {
-            setTimeout(() => window.location.href = 'https://financial.health-ease-hospital.com/prefect', 1000);
+            setTimeout(() => window.location.href = 'http://localhost/prefect', 1000);
         }
     } catch (e) {
         console.error(e);

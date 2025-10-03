@@ -15,7 +15,7 @@ $children = '
         <thead>
           <tr class="bg-slate-100 text-left text-slate-600 uppercase text-xs">
             <th class="px-4 py-3">Request ID</th>
-            <th class="px-4 py-3">Department</th>
+            <th class="px-4 py-3">Category</th>
             <th class="px-4 py-3">Purpose</th>
             <th class="px-4 py-3">Allocated Budget</th>
             <th class="px-4 py-3">Status</th>
@@ -30,7 +30,7 @@ $children = '
 
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
-const apiUrl = "https://financial.health-ease-hospital.com/prefect/api/budget_requests_api.php";
+const apiUrl = "http://localhost/prefect/api/budget_requests_api.php";
 
 // Load table data
 async function loadRequests() {

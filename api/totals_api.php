@@ -20,8 +20,15 @@ $payRes = mysqli_query($conn, "SELECT COUNT(*) as total FROM payments");
 $payRow = mysqli_fetch_assoc($payRes);
 $response["accounts_payable"] = $payRow["total"] ?? 0;
 
-// Accounts Receivable (same as collections)
-$response["accounts_receivable"] = $response["collections"];
+// Accounts Receivable (only Paid status from collections)
+$arRes = mysqli_query($conn, "SELECT COUNT(*) as total FROM collections WHERE status = 'Paid'");
+$arRow = mysqli_fetch_assoc($arRes);
+$response["accounts_receivable"] = $arRow["total"] ?? 0;
+
+// Budget Allocation (allocations table)
+$allocRes = mysqli_query($conn, "SELECT COUNT(*) as total FROM allocation");
+$allocRow = mysqli_fetch_assoc($allocRes);
+$response["budget_allocation"] = $allocRow["total"] ?? 0;
 
 // Return JSON
 echo json_encode($response);

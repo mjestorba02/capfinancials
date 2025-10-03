@@ -125,7 +125,7 @@ adminLayout($children);
 <!-- JS -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  const apiUrl = "https://financial.health-ease-hospital.com/prefect/api/collections.php";
+  const apiUrl = "http://localhost/prefect/api/collections.php";
   let _paidCache = [];
 
   // ===================== PRINT ALL PAID =====================

@@ -8,14 +8,38 @@ $children = '
   <!-- Header -->
   <div class="flex justify-between items-center mb-8">
     <div>
-      <h1 class="text-2xl font-bold">Reports</h1>
-      <p class="text-sm text-slate-500">Generate, download, and review financial reports</p>
+      <h1 class="text-2xl font-bold">Dashboard</h1>
+      <p class="text-sm text-slate-500">Overview of key metrics, activities, and financial performance</p>
     </div>
     <div class="flex items-center gap-3">
       <!-- Export Reports Button -->
       <button onclick="exportReports()" class="bg-green-500 hover:bg-green-600 text-white text-sm px-4 py-2 rounded-lg shadow flex items-center gap-2">
         <i class="bx bx-file"></i> Export Reports
       </button>
+    </div>
+  </div>
+
+  <!-- Totals Section -->
+  <div id="totalsSection" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+    <div class="bg-white p-4 rounded-xl shadow border border-slate-200 text-center">
+      <h4 class="text-sm text-slate-500">Accounts Payable</h4>
+      <p id="apTotal" class="text-2xl font-bold text-blue-600">0</p>
+    </div>
+    <div class="bg-white p-4 rounded-xl shadow border border-slate-200 text-center">
+      <h4 class="text-sm text-slate-500">Accounts Receivable</h4>
+      <p id="arTotal" class="text-2xl font-bold text-green-600">0</p>
+    </div>
+    <div class="bg-white p-4 rounded-xl shadow border border-slate-200 text-center">
+      <h4 class="text-sm text-slate-500">Budget Allocation</h4>
+      <p id="budgetTotal" class="text-2xl font-bold text-purple-600">0</p>
+    </div>
+    <div class="bg-white p-4 rounded-xl shadow border border-slate-200 text-center">
+      <h4 class="text-sm text-slate-500">Collections</h4>
+      <p id="collectionsTotal" class="text-2xl font-bold text-orange-600">0</p>
+    </div>
+    <div class="bg-white p-4 rounded-xl shadow border border-slate-200 text-center">
+      <h4 class="text-sm text-slate-500">Disbursements</h4>
+      <p id="disbursementsTotal" class="text-2xl font-bold text-red-600">0</p>
     </div>
   </div>
 
@@ -37,50 +61,10 @@ $children = '
       </div>
     </div>
   </div>
-
 </main>
-
-<!-- Modal -->
-<div id="reportModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-  <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg relative">
-    <h2 class="text-xl font-bold mb-4">Add New Report</h2>
-    <form class="space-y-4">
-      <div>
-        <label class="block text-sm font-medium mb-1">Report Title</label>
-        <input type="text" class="w-full border rounded-lg px-3 py-2 focus:ring focus:ring-orange-300">
-      </div>
-      <div>
-        <label class="block text-sm font-medium mb-1">Type</label>
-        <select class="w-full border rounded-lg px-3 py-2">
-          <option>Collections</option>
-          <option>Disbursement</option>
-          <option>Accounts Payable</option>
-          <option>Accounts Receivable</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-sm font-medium mb-1">Date</label>
-        <input type="date" class="w-full border rounded-lg px-3 py-2">
-      </div>
-      <div>
-        <label class="block text-sm font-medium mb-1">Status</label>
-        <select class="w-full border rounded-lg px-3 py-2">
-          <option>Pending</option>
-          <option>Approved</option>
-          <option>Rejected</option>
-        </select>
-      </div>
-      <div class="flex justify-end gap-3 mt-6">
-        <button type="button" onclick="closeModal()" class="px-4 py-2 bg-gray-300 rounded-lg">Cancel</button>
-      </div>
-    </form>
-  </div>
-</div>
 
 <!-- Boxicons -->
 <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-
-
 ';
 
 adminLayout($children);
@@ -89,24 +73,18 @@ adminLayout($children);
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  // Modal toggle
-  function openModal() {
-    document.getElementById("reportModal").classList.remove("hidden");
-  }
-  function closeModal() {
-    document.getElementById("reportModal").classList.add("hidden");
-  }
-
-  // Dummy export function
-  function exportReports() {
-    alert("Exporting reports... (implement your logic here)");
-  }
-
   // Fetch totals from API
   async function loadReportData() {
     try {
-  const res = await fetch("https://financial.health-ease-hospital.com/prefect/api/totals_api.php");
+      const res = await fetch("http://localhost/prefect/api/totals_api.php");
       const data = await res.json();
+
+      // Update Totals
+      document.getElementById("apTotal").textContent = data.accounts_payable || 0;
+      document.getElementById("arTotal").textContent = data.accounts_receivable || 0;
+      document.getElementById("budgetTotal").textContent = data.budget_allocation || 0;
+      document.getElementById("collectionsTotal").textContent = data.collections || 0;
+      document.getElementById("disbursementsTotal").textContent = data.disbursements || 0;
 
       // Bar Chart
       const ctx = document.getElementById("reportsChart");
@@ -114,16 +92,17 @@ adminLayout($children);
         new Chart(ctx, {
           type: "bar",
           data: {
-            labels: ["Collections", "Disbursements", "AP", "AR"],
+            labels: ["Collections", "Disbursements", "AP", "AR", "Budget"],
             datasets: [{
               label: "Reports Count",
               data: [
                 data.collections,
                 data.disbursements,
                 data.accounts_payable,
-                data.accounts_receivable
+                data.accounts_receivable,
+                data.budget_allocation
               ],
-              backgroundColor: ["#3b82f6","#10b981","#facc15","#ef4444"],
+              backgroundColor: ["#f59e0b","#ef4444","#3b82f6","#10b981","#8b5cf6"],
             }]
           },
           options: {
@@ -135,7 +114,7 @@ adminLayout($children);
         });
       }
 
-      // Pie Chart (static for now, unless you want dynamic)
+      // Pie Chart
       const pieCtx = document.getElementById("reportsPie");
       if (pieCtx) {
         new Chart(pieCtx, {
@@ -144,7 +123,7 @@ adminLayout($children);
             labels: ["Approved", "Pending", "Rejected"],
             datasets: [{
               label: "Status",
-              data: [16, 6, 2],
+              data: [16, 6, 2], // static unless API provides it
               backgroundColor: ["#10b981","#facc15","#ef4444"],
             }]
           },
@@ -162,37 +141,35 @@ adminLayout($children);
       console.error("Error loading report data:", error);
     }
   }
-  // Export function
-async function exportReports() {
-  try {
-  const res = await fetch("https://financial.health-ease-hospital.com/prefect/api/totals_api.php");
-    const data = await res.json();
 
-    // Convert JSON to CSV format
-    let csvContent = "Category,Count\n";
-    csvContent += `Collections,${data.collections}\n`;
-    csvContent += `Disbursements,${data.disbursements}\n`;
-    csvContent += `Accounts Payable,${data.accounts_payable}\n`;
-    csvContent += `Accounts Receivable,${data.accounts_receivable}\n`;
+  // Export as CSV
+  async function exportReports() {
+    try {
+      const res = await fetch("http://localhost/prefect/api/totals_api.php");
+      const data = await res.json();
 
-    // Create a downloadable CSV file
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "financial_reports.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      let csvContent = "Category,Count\n";
+      csvContent += `Collections,${data.collections}\n`;
+      csvContent += `Disbursements,${data.disbursements}\n`;
+      csvContent += `Accounts Payable,${data.accounts_payable}\n`;
+      csvContent += `Accounts Receivable,${data.accounts_receivable}\n`;
+      csvContent += `Budget Allocation,${data.budget_allocation}\n`;
 
-  } catch (error) {
-    console.error("Error exporting reports:", error);
-    alert("Failed to export reports. Check console for details.");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", "financial_reports.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+    } catch (error) {
+      console.error("Error exporting reports:", error);
+      alert("Failed to export reports. Check console for details.");
+    }
   }
-}
 
-
-  // Call function when page loads
+  // Load data on page load
   window.onload = loadReportData;
 </script>
-

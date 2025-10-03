@@ -1,15 +1,15 @@
 <?php
 // db.php - Database Connection (MySQLi)
 
-$host = "localhost";       // Database host
-$user = "fina_admin";            // Database username
-$password = "C@c2lRE9BVCOUzv1";            // Database password
-$dbname = "fina_financial_hostipal"; // Database name
-
 // $host = "localhost";       // Database host
-// $user = "root";            // Database username
-// $password = "";            // Database password
-// $dbname = "capfinancial"; // Database name
+// $user = "fina_admin";            // Database username
+// $password = "C@c2lRE9BVCOUzv1";            // Database password
+// $dbname = "fina_financial_hostipal"; // Database name
+
+$host = "localhost";       // Database host
+$user = "root";            // Database username
+$password = "";            // Database password
+$dbname = "capfinancial"; // Database name
 
 // Create connection
 $conn = mysqli_connect($host, $user, $password, $dbname);
