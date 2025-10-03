@@ -31,7 +31,7 @@ $_SESSION['email'] = $user['email'];
 unset($_SESSION['otp'], $_SESSION['otp_email'], $_SESSION['otp_expires'], $_SESSION['pre_login_user']);
 
 // Always redirect to one dashboard
-$redirect = 'pages/collections.php';
+$redirect = 'pages/reports.php';
 
 echo json_encode([
     'status' => 'success',
