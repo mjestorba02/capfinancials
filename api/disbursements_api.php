@@ -249,7 +249,7 @@ switch ($method) {
     $effectiveDate = isset($data['disbursement_date']) ? $data['disbursement_date'] : ($current['disbursement_date'] ?? date('Y-m-d'));
 
     // Insert journal entries if status == Approved
-    if (isset($data['status']) && strtolower($data['status']) === "approved") {
+    if (isset($data['status']) && strtolower($data['status']) === "Released") {
         try {
             $sql_journal = "INSERT INTO journal_entries (entry_date, account, description, debit, credit, source_module, reference_id) VALUES (?, ?, ?, ?, ?, 'Disbursements', ?)";
             $journal_stmt = $conn->prepare($sql_journal);

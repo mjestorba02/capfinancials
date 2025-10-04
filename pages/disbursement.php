@@ -299,7 +299,7 @@ document.getElementById("disbursementForm").addEventListener("submit", async (e)
     }
 
     if (result.success) {
-      showToast("✅ Disbursement saved successfully!", "success");
+      showToast("Disbursement saved successfully!", "success");
       closeModal();
       loadDisbursements();
     } else {
