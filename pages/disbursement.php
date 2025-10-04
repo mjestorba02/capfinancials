@@ -169,91 +169,82 @@ function showToast(message, type) {
 
 // ================= FETCH & DISPLAY =================
 async function loadDisbursements() {
-  const res = await fetch(apiUrl);
-  const data = await res.json();
-  tableBody.innerHTML = data.map(d => `
-    <tr>
-      <td class="px-4 py-3 font-medium">${d.voucher_no}</td>
-      <td class="px-4 py-3">${d.vendor}</td>
-      <td class="px-4 py-3">${d.category}</td>
-      <td class="px-4 py-3 text-red-600">₱${d.amount}</td>
-      <td class="px-4 py-3">
-        <span class="${d.status === "Released" ? "text-green-600" : "text-yellow-600"} font-semibold">
-          ${d.status}
-        </span>
-      </td>
-      <td class="px-4 py-3">${d.disbursement_date}</td>
-      <td class="px-4 py-3 text-right space-x-2">
-        ${
-          d.status === "Pending"
-          ? `<button onclick="releaseDisbursement(${d.id})" 
-                    class="text-green-600 hover:text-green-800" 
-                    title="Release">
-                <i class="bx bx-check-circle text-xl"></i>
-              </button>`
-          : ""
-        }
-        <button onclick="editDisbursement(${d.id})" 
-                class="text-blue-600 hover:text-blue-800" title="Edit">
-          <i class="bx bx-edit-alt text-xl"></i>
-        </button>
-        <button onclick="viewDisbursement(${d.id})" 
-                class="text-gray-600 hover:text-gray-800" title="View">
-          <i class="bx bx-show text-xl"></i>
-        </button>
-        <button onclick="deleteDisbursement(${d.id})" 
-                class="text-red-600 hover:text-red-800" title="Delete">
-          <i class="bx bx-trash text-xl"></i>
-        </button>
-      </td>
-    </tr>
-  `).join("");
+  try {
+    const res = await fetch(apiUrl);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    tableBody.innerHTML = (data || []).map(d => `
+      <tr>
+        <td class="px-4 py-3 font-medium">${d.voucher_no}</td>
+        <td class="px-4 py-3">${d.vendor}</td>
+        <td class="px-4 py-3">${d.category}</td>
+        <td class="px-4 py-3 text-red-600">₱${parseFloat(d.amount || 0).toLocaleString()}</td>
+        <td class="px-4 py-3">
+          <span class="${d.status === "Released" ? "text-green-600" : "text-yellow-600"} font-semibold">
+            ${d.status}
+          </span>
+        </td>
+        <td class="px-4 py-3">${d.disbursement_date}</td>
+        <td class="px-4 py-3 text-right space-x-2">
+          ${ d.status === "Pending" ? `<button onclick="openReleaseModal(${d.id})" class="text-green-600 hover:text-green-800" title="Release"><i class="bx bx-check-circle text-xl"></i></button>` : "" }
+          <button onclick="editDisbursement(${d.id})" class="text-blue-600 hover:text-blue-800" title="Edit"><i class="bx bx-edit-alt text-xl"></i></button>
+          <button onclick="viewDisbursement(${d.id})" class="text-gray-600 hover:text-gray-800" title="View"><i class="bx bx-show text-xl"></i></button>
+          <button onclick="deleteDisbursement(${d.id})" class="text-red-600 hover:text-red-800" title="Delete"><i class="bx bx-trash text-xl"></i></button>
+        </td>
+      </tr>
+    `).join("");
+  } catch (err) {
+    console.error("loadDisbursements error:", err);
+    showToast("Failed to load disbursements.", "error");
+  }
 }
 
 // ================= LOAD DROPDOWNS =================
+// Returns vendor array for callers that need to wait
 async function loadVendors() {
   try {
     const res = await fetch(vendorApi);
-    console.log("Fetch status:", res.status);
-
-    const text = await res.text(); // read raw response
-    console.log("Raw response:", text);
-
+    console.log("Fetch vendors status:", res.status);
+    const text = await res.text();
     let result;
     try {
       result = JSON.parse(text);
     } catch (e) {
-      console.error("JSON parse error:", e);
-      showToast("Invalid response from server.", "error");
-      return;
+      console.error("Vendor JSON parse error:", e, text);
+      showToast("Invalid vendor response from server.", "error");
+      return [];
     }
 
     if (!result.success) {
-      console.error("API Error:", result.error);
+      console.error("Vendor API Error:", result.error);
       showToast("Failed to load vendors: " + (result.error || "Unknown error"), "error");
-      return;
+      return [];
     }
 
-    const vendors = result.data;
+    const vendors = result.data || [];
     const vendorSelect = document.getElementById("vendorInput");
     const amountInput = document.getElementById("amountInput");
-
     vendorSelect.innerHTML = `<option value="">Select vendor</option>`;
+
     vendors.forEach(v => {
-      vendorSelect.innerHTML += `
-        <option value="${v.vendor}" data-amount="${v.amount}">
-          ${v.vendor} - ₱${parseFloat(v.amount).toLocaleString()}
-        </option>`;
+      // use vendor name as value for backward compatibility; if you have vendor_id, prefer that
+      const opt = document.createElement("option");
+      opt.value = v.vendor;
+      opt.setAttribute("data-amount", v.amount ?? "");
+      opt.innerText = `${v.vendor} - ₱${parseFloat(v.amount || 0).toLocaleString()}`;
+      vendorSelect.appendChild(opt);
     });
 
     vendorSelect.onchange = () => {
       const selected = vendorSelect.options[vendorSelect.selectedIndex];
-      amountInput.value = selected.getAttribute("data-amount") || "";
+      amountInput.value = selected?.getAttribute("data-amount") || "";
     };
 
+    return vendors;
   } catch (err) {
     console.error("Vendor load error:", err);
     showToast("Failed to load vendors. Please try again.", "error");
+    return [];
   }
 }
 
@@ -274,24 +265,29 @@ document.getElementById("disbursementForm").addEventListener("submit", async (e)
   e.preventDefault();
 
   const id = document.getElementById("disbursementId").value.trim();
-  const formData = new FormData();
-  formData.append("vendor", document.getElementById("vendorInput").value);
-  formData.append("category", document.getElementById("categoryInput").value);
-  formData.append("amount", document.getElementById("amountInput").value);
-  formData.append("status", document.getElementById("statusInput").value);
-  formData.append("disbursement_date", document.getElementById("dateInput").value);
-
-  let method = id ? "POST" : "POST"; // use POST for all since PHP may not handle PUT well
-  if (id) formData.append("id", id);
-  formData.append("action", id ? "update" : "add");
+  const payload = {
+    vendor: document.getElementById("vendorInput").value,
+    category: document.getElementById("categoryInput").value,
+    amount: document.getElementById("amountInput").value,
+    status: document.getElementById("statusInput").value,
+    disbursement_date: document.getElementById("dateInput").value
+  };
 
   try {
-    const res = await fetch(apiUrl, {
+    let method, url = apiUrl;
+    if (id) {
+      method = "PUT";
+      payload.id = id;
+    } else {
+      method = "POST";
+    }
+
+    const res = await fetch(url, {
       method,
-      body: formData,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
     });
 
-    // Try to parse JSON safely
     const text = await res.text();
     let result;
     try {
@@ -318,45 +314,71 @@ document.getElementById("disbursementForm").addEventListener("submit", async (e)
 
 // ================= EDIT =================
 async function editDisbursement(id) {
-  const res = await fetch(apiUrl + "?id=" + id);
-  const d = await res.json();
-  loadVendors();
-  document.getElementById("modalTitle").innerText = "Edit Disbursement";
-  document.getElementById("disbursementId").value = d.id;
-  document.getElementById("vendorInput").value = d.vendor;
-  document.getElementById("categoryInput").value = d.category;
-  document.getElementById("amountInput").value = d.amount;
-  document.getElementById("statusInput").value = d.status;
-  document.getElementById("dateInput").value = d.disbursement_date;
-  modal.classList.remove("hidden");
+  try {
+    // fetch the disbursement record
+    const res = await fetch(apiUrl + "?id=" + id);
+    if (!res.ok) throw new Error("Failed to fetch record");
+    const d = await res.json();
+
+    // load vendors and wait so we can set the select value
+    await loadVendors();
+
+    document.getElementById("modalTitle").innerText = "Edit Disbursement";
+    document.getElementById("disbursementId").value = d.id;
+    document.getElementById("vendorInput").value = d.vendor;
+    document.getElementById("categoryInput").value = d.category;
+    document.getElementById("amountInput").value = d.amount;
+    document.getElementById("statusInput").value = d.status;
+    document.getElementById("dateInput").value = d.disbursement_date;
+    modal.classList.remove("hidden");
+  } catch (err) {
+    console.error("editDisbursement error:", err);
+    showToast("Failed to load disbursement for editing.", "error");
+  }
 }
 
 // ================= VIEW =================
 async function viewDisbursement(id) {
-  const res = await fetch(apiUrl + "?id=" + id);
-  const d = await res.json();
-  document.getElementById("viewContent").innerHTML = `
-    <p><strong>Voucher #:</strong> ${d.voucher_no}</p>
-    <p><strong>Vendor:</strong> ${d.vendor}</p>
-    <p><strong>Category:</strong> ${d.category}</p>
-    <p><strong>Amount:</strong> ₱${d.amount}</p>
-    <p><strong>Status:</strong> ${d.status}</p>
-    <p><strong>Date:</strong> ${d.disbursement_date}</p>
-  `;
-  viewModal.classList.remove("hidden");
+  try {
+    const res = await fetch(apiUrl + "?id=" + id);
+    if (!res.ok) throw new Error("Failed to fetch record");
+    const d = await res.json();
+    document.getElementById("viewContent").innerHTML = `
+      <p><strong>Voucher #:</strong> ${d.voucher_no}</p>
+      <p><strong>Vendor:</strong> ${d.vendor}</p>
+      <p><strong>Category:</strong> ${d.category}</p>
+      <p><strong>Amount:</strong> ₱${parseFloat(d.amount || 0).toLocaleString()}</p>
+      <p><strong>Status:</strong> ${d.status}</p>
+      <p><strong>Date:</strong> ${d.disbursement_date}</p>
+    `;
+    viewModal.classList.remove("hidden");
+  } catch (err) {
+    console.error("viewDisbursement error:", err);
+    showToast("Failed to fetch disbursement details.", "error");
+  }
 }
 function closeViewModal() { viewModal.classList.add("hidden"); }
 
 // ================= DELETE =================
 async function deleteDisbursement(id) {
   if (!confirm("Are you sure you want to delete this record?")) return;
-  const res = await fetch(apiUrl, { method: "DELETE", body: "id=" + id });
-  const result = await res.json();
-  if (result.success) {
-    showToast("Disbursement deleted!", "success");
-    loadDisbursements();
-  } else {
-    showToast("Error: " + result.error, "error");
+  try {
+    // send as x-www-form-urlencoded so PHP's parse_str() will pick it up
+    const res = await fetch(apiUrl, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ id }).toString()
+    });
+    const result = await res.json();
+    if (result.success) {
+      showToast("Disbursement deleted!", "success");
+      loadDisbursements();
+    } else {
+      showToast("Error: " + result.error, "error");
+    }
+  } catch (err) {
+    console.error("deleteDisbursement error:", err);
+    showToast("Failed to delete record.", "error");
   }
 }
 
@@ -368,9 +390,9 @@ function filterDisbursements() {
   rows.forEach(row => {
     const rowStatus = row.cells[4].textContent.trim().toLowerCase();
     if (status === "all" || rowStatus === status) {
-      row.style.display = "";   // ✅ show
+      row.style.display = "";
     } else {
-      row.style.display = "none"; // ✅ hide
+      row.style.display = "none";
     }
   });
 }
@@ -380,36 +402,12 @@ function exportDisbursements() {
   showToast("Export disbursements functionality not implemented yet!", "error");
 }
 
-// Release
-function releaseDisbursement(id) {
-  if (!confirm("Mark this disbursement as Released?")) return;
-
-  fetch("api/disbursements_api.php", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      id: id,
-      status: "Released"
-    })
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        alert("Disbursement released successfully!");
-        loadDisbursements(); // reload your table
-      } else {
-        alert("Error: " + data.error);
-      }
-    });
-}
-
-let releaseId = null; // store which disbursement to release
-
-function releaseDisbursement(id) {
+// ================= RELEASE FLOW (modal + API) =================
+let releaseId = null;
+function openReleaseModal(id) {
   releaseId = id;
   document.getElementById("releaseModal").classList.remove("hidden");
 }
-
 function closeReleaseModal() {
   releaseId = null;
   document.getElementById("releaseModal").classList.add("hidden");
@@ -417,23 +415,23 @@ function closeReleaseModal() {
 
 document.getElementById("confirmReleaseBtn").addEventListener("click", async () => {
   if (!releaseId) return;
-
-  const res = await fetch(apiUrl, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      id: releaseId,
-      status: "Released"
-    })
-  });
-  const result = await res.json();
-
-  if (result.success) {
-    showToast("Disbursement released successfully!", "success");
-    closeReleaseModal();
-    loadDisbursements();
-  } else {
-    showToast("Error: " + result.error, "error");
+  try {
+    const res = await fetch(apiUrl, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: releaseId, status: "Released" })
+    });
+    const result = await res.json();
+    if (result.success) {
+      showToast("Disbursement released successfully!", "success");
+      closeReleaseModal();
+      loadDisbursements();
+    } else {
+      showToast("Error: " + result.error, "error");
+    }
+  } catch (err) {
+    console.error("release error:", err);
+    showToast("Failed to release disbursement.", "error");
   }
 });
 
