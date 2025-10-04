@@ -37,6 +37,9 @@ $children = '
         <button onclick="filterPayments()" class="bg-slate-600 hover:bg-slate-700 text-white text-sm px-3 py-2 rounded-lg">
           Filter
         </button>
+        <button onclick="resetFilters()" class="bg-gray-300 hover:bg-gray-400 text-sm px-3 py-2 rounded-lg">
+          Reset
+        </button>
       </div>
     </div>
 
@@ -273,6 +276,23 @@ document.getElementById("paymentForm").addEventListener("submit", async (e) => {
 
       row.style.display = visible ? "" : "none";
     });
+  }
+
+  function resetFilters() {
+    document.getElementById("filterPaymentStatus").value = "all";
+    document.getElementById("fromDate").value = "";
+    document.getElementById("toDate").value = "";
+
+    // Show all rows again
+    const rows = document.querySelectorAll("#paymentsBody tr");
+    rows.forEach(row => (row.style.display = ""));
+
+    // Optional: Show a toast or console log
+    if (typeof showToast === "function") {
+      showToast("Filters cleared ✅", "success");
+    } else {
+      console.log("Filters cleared");
+    }
   }
 
   // Export (CSV)
