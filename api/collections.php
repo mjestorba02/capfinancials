@@ -1,8 +1,18 @@
 <?php
-header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+error_reporting(E_ALL);
+ini_set('display_errors', 0); // prevent HTML errors
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/error.log');
+
 include "db.php"; // adjust path to your db connection
 
 $method = $_SERVER['REQUEST_METHOD'];
