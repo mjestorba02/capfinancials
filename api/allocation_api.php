@@ -1,8 +1,4 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
@@ -24,42 +20,15 @@ switch ($method) {
 
     case "POST":
         $data = json_decode(file_get_contents("php://input"), true);
-        $request_id = intval($data['request_id']);
         $department = $conn->real_escape_string($data['department']);
         $project = $conn->real_escape_string($data['project']);
         $allocated = $conn->real_escape_string($data['allocated']);
 
-        // 🔍 Debug log
-        error_log("[allocation_api.php DEBUG] Received POST request. request_id = " . $request_id);
-
-        // Insert allocation
-        $sql = "INSERT INTO allocation (request_id, department, project, allocated) 
-                VALUES ('$request_id', '$department', '$project', '$allocated')";
-        error_log("[allocation_api.php DEBUG] Executing SQL: " . $sql);
-
-        if ($conn->query($sql)) {
-            // Mark request as approved
-            $update = "UPDATE budget_requests 
-                    SET status = 'Approved' 
-                    WHERE id = $request_id";
-            error_log("[allocation_api.php DEBUG] Executing Update SQL: " . $update);
-
-            if ($conn->query($update)) {
-                error_log("[allocation_api.php DEBUG] budget_requests updated successfully for request_id = " . $request_id);
-            } else {
-                error_log("[allocation_api.php ERROR] Failed to update budget_requests: " . $conn->error);
-            }
-
-            echo json_encode([
-                "success" => true,
-                "message" => "Allocation added successfully and request approved."
-            ]);
+        $sql = "INSERT INTO allocation (department, project, allocated) VALUES ('$department', '$project', '$allocated')";
+        if($conn->query($sql)) {
+            echo json_encode(["success"=>true, "message"=>"Allocation added successfully"]);
         } else {
-            error_log("[allocation_api.php ERROR] Failed to insert allocation: " . $conn->error);
-            echo json_encode([
-                "success" => false,
-                "error" => $conn->error
-            ]);
+            echo json_encode(["success"=>false, "error"=>$conn->error]);
         }
         break;
 
