@@ -3,6 +3,7 @@ header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+
 include "db.php"; // adjust path to your db connection
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -12,11 +13,11 @@ switch ($method) {
     // ===================== GET =====================
     case "GET":
         if (isset($_GET['id'])) {
-            $stmt = $conn->prepare("SELECT * FROM collections WHERE invoice_no=?");
+            $stmt = $conn->prepare("SELECT * FROM collections WHERE invoice_no = ?");
             $stmt->bind_param("s", $_GET['id']);
             $stmt->execute();
             $result = $stmt->get_result()->fetch_assoc();
-            echo json_encode($result);
+            echo json_encode($result ?: ["success" => false, "error" => "Not found"]);
         } else {
             $result = $conn->query("SELECT * FROM collections ORDER BY id DESC");
             echo json_encode($result->fetch_all(MYSQLI_ASSOC));
@@ -51,18 +52,22 @@ switch ($method) {
             echo json_encode(["success" => false, "error" => $stmt->error]);
         }
         break;
+
+    // ===================== PUT =====================
     case "PUT":
-        console.log("test2");
+        // ⚠️ PHP uses error_log(), not console.log()
+        error_log("PUT request triggered");
+
         $data = json_decode(file_get_contents("php://input"), true);
 
-        if (!isset($data['invoice_no'])) {
-            echo json_encode(["success"=>false,"error"=>"Invoice number required"]);
+        if (empty($data['invoice_no'])) {
+            echo json_encode(["success" => false, "error" => "Invoice number required"]);
             exit;
         }
 
         $invoice_no = $data['invoice_no'];
 
-        // Fetch existing record first
+        // Fetch existing record
         $res = $conn->prepare("SELECT customer, department, amount, status, date FROM collections WHERE invoice_no=?");
         $res->bind_param("s", $invoice_no);
         $res->execute();
@@ -70,31 +75,26 @@ switch ($method) {
         $res->fetch();
         $res->close();
 
-        // If no record found
         if (!$db_customer && !$db_department && !$db_amount) {
-            echo json_encode(["success"=>false,"error"=>"Invoice not found"]);
+            echo json_encode(["success" => false, "error" => "Collection not found"]);
             exit;
         }
 
-        // Use incoming values if provided, else keep existing
+        // Merge new data with old
         $customer   = $data['customer']   ?? $db_customer;
         $department = $data['department'] ?? $db_department;
         $amount     = isset($data['amount']) ? floatval($data['amount']) : $db_amount;
         $status     = $data['status']     ?? $db_status;
         $date       = $data['date']       ?? $db_date;
 
-        console.log("test");
-
-        // Update query
+        // Update
         $stmt = $conn->prepare("UPDATE collections 
                                 SET customer=?, department=?, amount=?, status=?, date=? 
                                 WHERE invoice_no=?");
         $stmt->bind_param("ssdsss", $customer, $department, $amount, $status, $date, $invoice_no);
         $updateSuccess = $stmt->execute();
 
-        console.log("test1");
-
-        // If status = paid, create journal entry
+        // Journal entry if Paid
         if ($status === "Paid") {
             $account = "Accounts Receivable";
             $description = "Payment approved for Invoice #$invoice_no from $customer";
@@ -108,17 +108,15 @@ switch ($method) {
             $jstmt->execute();
         }
 
-        // 🔹 Notifications
-        $notif_stmt = @$conn->prepare(
-            "INSERT INTO notifications (module, record_id, message, link) VALUES (?, ?, ?, ?)"
-        );
+        // Notifications
+        $notif_stmt = $conn->prepare("INSERT INTO notifications (module, record_id, message, link) VALUES (?, ?, ?, ?)");
         if ($notif_stmt) {
             $module = 'collections';
             $record_id = $invoice_no;
             $msg = "Collection #$invoice_no updated. Status: $status";
             $link = "sales_invoices.php?invoice_no=" . urlencode($invoice_no);
-            @$notif_stmt->bind_param("ssss", $module, $record_id, $msg, $link);
-            @$notif_stmt->execute();
+            $notif_stmt->bind_param("ssss", $module, $record_id, $msg, $link);
+            $notif_stmt->execute();
         }
 
         echo json_encode([
@@ -127,3 +125,4 @@ switch ($method) {
         ]);
         break;
 }
+?>

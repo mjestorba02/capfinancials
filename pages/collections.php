@@ -103,17 +103,17 @@ $children = '
   </div>
 </div>
 
-    <!-- Approve Confirmation Modal -->
-    <div id="approveModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-      <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-        <h2 class="text-xl font-bold mb-4">Confirm Approval</h2>
-        <p class="text-sm text-slate-600">Are you sure you want to mark collection <span id="approveInvoice" class="font-medium"></span> as <span class="font-semibold">Paid</span>?</p>
-        <div class="flex justify-end gap-3 mt-6">
-          <button type="button" onclick="closeApproveModal()" class="px-4 py-2 bg-gray-200 rounded">Cancel</button>
-          <button id="confirmApproveBtn" type="button" onclick="approveCollectionFromModal()" class="px-4 py-2 bg-green-600 text-white rounded">Confirm</button>
-        </div>
+  <!-- Approve Confirmation Modal -->
+  <div id="approveModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+      <h2 class="text-xl font-bold mb-4">Confirm Approval</h2>
+      <p class="text-sm text-slate-600">Are you sure you want to mark collection <span id="approveInvoice" class="font-medium"></span> as <span class="font-semibold">Paid</span>?</p>
+      <div class="flex justify-end gap-3 mt-6">
+        <button type="button" onclick="closeApproveModal()" class="px-4 py-2 bg-gray-200 rounded">Cancel</button>
+        <button id="confirmApproveBtn" type="button" onclick="approveCollectionFromModal()" class="px-4 py-2 bg-green-600 text-white rounded">Confirm</button>
       </div>
     </div>
+  </div>
 
 <!-- Boxicons + Toastify -->
 <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
@@ -205,55 +205,27 @@ async function approveCollectionFromModal() {
   const invoice_no = _pendingApproveInvoice;
   if (!invoice_no) return;
 
+  // disable confirm button while request runs
   const btn = document.getElementById('confirmApproveBtn');
   btn.disabled = true;
 
   try {
-    // Fetch the full collection record first
-    const fetchRes = await fetch(`${apiUrl}?invoice_no=${invoice_no}`);
-    const collection = await fetchRes.json();
-
-    if (!collection || !collection.data) {
-      showToast('Collection not found.', 'error');
-      btn.disabled = false;
-      return;
-    }
-
-    const { customer, department, amount, date } = collection.data;
-
-    // Now send PUT request with all required fields
     const res = await fetch(apiUrl, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        invoice_no,
-        customer,
-        department,
-        amount,
-        date,
-        status: 'Paid'
-      })
+      body: JSON.stringify({ invoice_no, status: 'Paid' })
     });
 
-    const resultText = await res.text();
-    console.log('Raw response:', resultText);
-
-    let result;
-    try {
-      result = JSON.parse(resultText);
-    } catch {
-      throw new Error('Invalid JSON from server');
-    }
-
-    if (result.success) {
-      showToast(`Collection ${invoice_no} marked as Paid.`, 'success');
+    const result = await res.json();
+    if (result && result.success) {
+      showToast('Collection ' + invoice_no + ' marked as Paid.', 'success');
       closeApproveModal();
       loadCollections();
     } else {
-      showToast(result.error || 'Failed to approve collection.', 'error');
+      showToast('Failed to approve collection.', 'error');
     }
   } catch (err) {
-    console.error('Approve error:', err);
+    console.error(err);
     showToast('Error: Unable to reach server.', 'error');
   } finally {
     btn.disabled = false;
