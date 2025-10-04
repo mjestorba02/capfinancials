@@ -248,37 +248,44 @@ switch ($method) {
     $effectiveVendor = isset($data['vendor']) ? $data['vendor'] : ($current['vendor'] ?? '');
     $effectiveDate = isset($data['disbursement_date']) ? $data['disbursement_date'] : ($current['disbursement_date'] ?? date('Y-m-d'));
 
-    // Insert journal entries if status == Approved
-    if (isset($data['status']) && strtolower($data['status']) === "Released") {
+    if (isset($data['status']) && $data['status'] === "Released") {
         try {
-            $sql_journal = "INSERT INTO journal_entries (entry_date, account, description, debit, credit, source_module, reference_id) VALUES (?, ?, ?, ?, ?, 'Disbursements', ?)";
+            $sql_journal = "INSERT INTO journal_entries 
+                (entry_date, account, description, debit, credit, source_module, reference_id)
+                VALUES (NOW(), ?, ?, ?, ?, 'Disbursements', ?)";
             $journal_stmt = $conn->prepare($sql_journal);
 
-            if ($journal_stmt) {
-                // 1) Debit: Expense (Disbursement Category)
-                $account1 = $data['category'] ?? 'Disbursement Expense';
-                $desc1 = "Approved disbursement for vendor " . $effectiveVendor;
+            if (!$journal_stmt) {
+                $warnings[] = "Journal prepare failed: " . $conn->error;
+            } else {
+                // Debit
+                $account1 = "Accounts Payable";
+                $desc1 = "Disbursement recorded for vendor " . $effectiveVendor;
                 $debit1 = $effectiveAmount;
                 $credit1 = 0.00;
                 $ref = $id;
-                if (!$journal_stmt->bind_param("sssddi", $effectiveDate, $account1, $desc1, $debit1, $credit1, $ref)) {
+
+                if (!$journal_stmt->bind_param("ssddi", $account1, $desc1, $debit1, $credit1, $ref)) {
                     $warnings[] = "Journal bind (debit) failed: " . $journal_stmt->error;
-                } else if (!$journal_stmt->execute()) {
+                } elseif (!$journal_stmt->execute()) {
                     $warnings[] = "Journal execute (debit) failed: " . $journal_stmt->error;
+                } else {
+                    error_log("✅ Journal Debit inserted for Disbursement ID $id, Amount: $debit1");
                 }
 
-                // 2) Credit: Cash/Bank
-                $account2 = "Cash/Bank";
-                $desc2 = "Payment released for disbursement " . $effectiveVendor;
+                // Credit
+                $account2 = "Cash";
+                $desc2 = "Disbursement paid to vendor " . $effectiveVendor;
                 $debit2 = 0.00;
                 $credit2 = $effectiveAmount;
-                if (!$journal_stmt->bind_param("sssddi", $effectiveDate, $account2, $desc2, $debit2, $credit2, $ref)) {
+
+                if (!$journal_stmt->bind_param("ssddi", $account2, $desc2, $debit2, $credit2, $ref)) {
                     $warnings[] = "Journal bind (credit) failed: " . $journal_stmt->error;
-                } else if (!$journal_stmt->execute()) {
+                } elseif (!$journal_stmt->execute()) {
                     $warnings[] = "Journal execute (credit) failed: " . $journal_stmt->error;
+                } else {
+                    error_log("✅ Journal Credit inserted for Disbursement ID $id, Amount: $credit2");
                 }
-            } else {
-                $warnings[] = "Journal prepare failed: " . $conn->error;
             }
         } catch (Throwable $t) {
             $warnings[] = "Journal exception: " . $t->getMessage();
