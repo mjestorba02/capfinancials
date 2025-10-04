@@ -208,12 +208,21 @@ async function loadDisbursements() {
 async function loadVendors() {
   try {
     const res = await fetch(vendorApi);
-    const vendors = await res.json();
+    const result = await res.json();
 
+    if (!result.success) {
+      showToast("Failed to load vendors: " + (result.error || "Unknown error"), "error");
+      return;
+    }
+
+    const vendors = result.data;
     const vendorSelect = document.getElementById("vendorInput");
     const amountInput = document.getElementById("amountInput");
 
+    // Reset dropdown
     vendorSelect.innerHTML = `<option value="">Select vendor</option>`;
+
+    // Populate vendor options
     vendors.forEach(v => {
       vendorSelect.innerHTML += `
         <option value="${v.vendor}" data-amount="${v.amount}">
@@ -221,14 +230,14 @@ async function loadVendors() {
         </option>`;
     });
 
-    // When user selects a vendor, auto-fill amount
-    vendorSelect.addEventListener("change", () => {
+    vendorSelect.onchange = () => {
       const selected = vendorSelect.options[vendorSelect.selectedIndex];
       amountInput.value = selected.getAttribute("data-amount") || "";
-    });
+    };
+
   } catch (err) {
     console.error("Vendor load error:", err);
-    showToast("Failed to load vendors.", "error");
+    showToast("Failed to load vendors. Please try again.", "error");
   }
 }
 
