@@ -103,17 +103,26 @@ $children = '
   </div>
 </div>
 
-    <!-- Approve Confirmation Modal -->
-    <div id="approveModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-      <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-        <h2 class="text-xl font-bold mb-4">Confirm Approval</h2>
-        <p class="text-sm text-slate-600">Are you sure you want to mark collection <span id="approveInvoice" class="font-medium"></span> as <span class="font-semibold">Paid</span>?</p>
-        <div class="flex justify-end gap-3 mt-6">
-          <button type="button" onclick="closeApproveModal()" class="px-4 py-2 bg-gray-200 rounded">Cancel</button>
-          <button id="confirmApproveBtn" type="button" onclick="approveCollectionFromModal()" class="px-4 py-2 bg-green-600 text-white rounded">Confirm</button>
-        </div>
-      </div>
+<!-- Approve Confirmation Modal -->
+<div id="approveModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+    <h2 class="text-xl font-bold mb-4">Confirm Approval</h2>
+    <p class="text-sm text-slate-600">
+      Are you sure you want to mark collection
+      <span id="approveInvoice" class="font-medium"></span> as
+      <span class="font-semibold">Paid</span>?
+    </p>
+
+    <!-- Debug message area -->
+    <div id="approveDebug"
+         class="mt-4 bg-slate-100 text-xs font-mono text-slate-700 p-2 rounded hidden whitespace-pre-wrap"></div>
+
+    <div class="flex justify-end gap-3 mt-6">
+      <button type="button" onclick="closeApproveModal()" class="px-4 py-2 bg-gray-200 rounded">Cancel</button>
+      <button id="confirmApproveBtn" type="button" onclick="approveCollectionFromModal()" class="px-4 py-2 bg-green-600 text-white rounded">Confirm</button>
     </div>
+  </div>
+</div>
 
 <!-- Boxicons + Toastify -->
 <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
@@ -205,8 +214,10 @@ async function approveCollectionFromModal() {
   const invoice_no = _pendingApproveInvoice;
   if (!invoice_no) return;
 
-  // disable confirm button while request runs
+  const debugBox = document.getElementById('approveDebug');
   const btn = document.getElementById('confirmApproveBtn');
+  debugBox.classList.remove('hidden');
+  debugBox.textContent = "🔄 Sending request to server...\n";
   btn.disabled = true;
 
   try {
@@ -216,23 +227,39 @@ async function approveCollectionFromModal() {
       body: JSON.stringify({ invoice_no, status: 'Paid' })
     });
 
-    const text = await res.text(); // get raw response first
-    console.log("Raw response:", text);
+    const rawText = await res.text();
+    debugBox.textContent += "\n📩 Raw Response:\n" + rawText;
 
-    if (!text) throw new Error("Empty response from server");
-    const result = JSON.parse(text);
+    if (!rawText) {
+      debugBox.textContent += "\n⚠️ Empty response from server.";
+      throw new Error("Empty response");
+    }
+
+    let result;
+    try {
+      result = JSON.parse(rawText);
+    } catch (jsonErr) {
+      debugBox.textContent += "\n❌ JSON parse failed: " + jsonErr.message;
+      throw jsonErr;
+    }
+
+    debugBox.textContent += "\n✅ Parsed Result:\n" + JSON.stringify(result, null, 2);
 
     if (result && result.success) {
       showToast('Collection ' + invoice_no + ' marked as Paid.', 'success');
       closeApproveModal();
       loadCollections();
     } else {
-      showToast(result?.error || 'Failed to approve collection.', 'error');
+      const errMsg = result?.error || "Failed to approve collection.";
+      debugBox.textContent += "\n❌ Server error: " + errMsg;
+      showToast(errMsg, 'error');
     }
-
   } catch (err) {
-    console.error(err);
+    console.error("Approval error:", err);
+    debugBox.textContent += "\n💥 Network/JS error:\n" + err.message;
     showToast('Error: Unable to reach server.', 'error');
+  } finally {
+    btn.disabled = false;
   }
 }
 
