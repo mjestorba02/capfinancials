@@ -5,12 +5,14 @@ header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 include "db.php";
 
-$sql = "SELECT DISTINCT vendor FROM payments ORDER BY vendor ASC";
-$result = $conn->query($sql);
-
+$result = $conn->query("SELECT vendor, amount FROM account_payable");
 $vendors = [];
+
 while ($row = $result->fetch_assoc()) {
-  $vendors[] = $row['vendor'];
+  $vendors[] = [
+    "vendor" => $row['vendor'],
+    "amount" => $row['amount']
+  ];
 }
 
 echo json_encode($vendors);

@@ -30,7 +30,7 @@ switch ($method) {
     $voucher_no = "VCH-" . str_pad($count, 3, "0", STR_PAD_LEFT);
 
     $stmt = $conn->prepare("INSERT INTO disbursements (voucher_no, vendor, category, amount, status, disbursement_date) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssssss", $voucher_no, $data['vendor'], $data['category'], $data['amount'], $data['status'], $data['disbursement_date']);
+    $stmt->bind_param("sssiss", $voucher_no, $data['vendor'], $data['category'], $data['amount'], $data['status'], $data['disbursement_date']);
 
     if ($stmt->execute()) {
       echo json_encode(["success" => true, "voucher_no" => $voucher_no]);

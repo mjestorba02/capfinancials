@@ -206,12 +206,30 @@ async function loadDisbursements() {
 
 // ================= LOAD DROPDOWNS =================
 async function loadVendors() {
-  const res = await fetch(vendorApi);
-  const vendors = await res.json();
-  const vendorSelect = document.getElementById("vendorInput");
-  vendorSelect.innerHTML = vendors.length > 0
-    ? vendors.map(v => `<option value="${v}">${v}</option>`).join("")
-    : "<option value=''>No vendors found</option>";
+  try {
+    const res = await fetch(vendorApi);
+    const vendors = await res.json();
+
+    const vendorSelect = document.getElementById("vendorInput");
+    const amountInput = document.getElementById("amountInput");
+
+    vendorSelect.innerHTML = `<option value="">Select vendor</option>`;
+    vendors.forEach(v => {
+      vendorSelect.innerHTML += `
+        <option value="${v.vendor}" data-amount="${v.amount}">
+          ${v.vendor} - ₱${parseFloat(v.amount).toLocaleString()}
+        </option>`;
+    });
+
+    // When user selects a vendor, auto-fill amount
+    vendorSelect.addEventListener("change", () => {
+      const selected = vendorSelect.options[vendorSelect.selectedIndex];
+      amountInput.value = selected.getAttribute("data-amount") || "";
+    });
+  } catch (err) {
+    console.error("Vendor load error:", err);
+    showToast("Failed to load vendors.", "error");
+  }
 }
 
 // ================= ADD / EDIT =================
@@ -239,9 +257,17 @@ document.getElementById("disbursementForm").addEventListener("submit", async (e)
   let res;
   if (id) {
     payload.id = id;
-    res = await fetch(apiUrl, { method: "PUT", body: JSON.stringify(payload) });
+    res = await fetch(apiUrl, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
   } else {
-    res = await fetch(apiUrl, { method: "POST", body: JSON.stringify(payload) });
+    res = await fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
   }
   const result = await res.json();
   if (result.success) {
