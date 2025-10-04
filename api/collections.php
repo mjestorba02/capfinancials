@@ -89,20 +89,6 @@ switch ($method) {
         $stmt->bind_param("ssdsss", $customer, $department, $amount, $status, $date, $invoice_no);
         $updateSuccess = $stmt->execute();
 
-        // If status = paid, create journal entry
-        if ($status === "Paid") {
-            $account = "Accounts Receivable";
-            $description = "Payment approved for Invoice #$invoice_no from $customer";
-            $entry_date = date("Y-m-d");
-
-            $jstmt = $conn->prepare("INSERT INTO journal_entries 
-                                    (entry_date, account, description, credit, source_module, reference_id) 
-                                    VALUES (?, ?, ?, ?, ?, ?)");
-            $module = "collections";
-            $jstmt->bind_param("sssiss", $entry_date, $account, $description, $amount, $module, $invoice_no);
-            $jstmt->execute();
-        }
-
         // 🔹 Notifications
         $notif_stmt = @$conn->prepare(
             "INSERT INTO notifications (module, record_id, message, link) VALUES (?, ?, ?, ?)"
