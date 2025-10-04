@@ -125,7 +125,7 @@ adminLayout($children);
 ?>
 
 <script>
-const apiUrl = "https://financial.health-ease-hospital.com/api/collections.php";
+const apiUrl = "http://localhost/prefect/api/collections.php";
 
 // ===================== LOAD COLLECTIONS =====================
 async function loadCollections() {
@@ -216,13 +216,25 @@ async function approveCollectionFromModal() {
       body: JSON.stringify({ invoice_no, status: 'Paid' })
     });
 
-    const result = await res.json();
+    // defensive parsing: attempt JSON.parse, otherwise log text
+    let result = null;
+    try {
+      result = await res.json();
+    } catch (parseErr) {
+      const txt = await res.text();
+      console.warn('approveCollectionFromModal: server returned non-JSON:', txt);
+      showToast('Server returned unexpected response. Check console.', 'error');
+      btn.disabled = false;
+      return;
+    }
+
     if (result && result.success) {
       showToast('Collection ' + invoice_no + ' marked as Paid.', 'success');
       closeApproveModal();
       loadCollections();
     } else {
-      showToast('Failed to approve collection.', 'error');
+      const msg = (result && (result.error || result.message)) ? (result.error || result.message) : 'Failed to approve collection.';
+      showToast('Error: ' + msg, 'error');
     }
   } catch (err) {
     console.error(err);
