@@ -76,22 +76,35 @@ switch ($method) {
       $amount = (float)$data['amount'];
       $date = trim($data['disbursement_date']);
 
-      // Generate voucher number based on count
-      $res = $conn->query("SELECT COUNT(*) as count FROM disbursements");
-      if ($res === false) {
-        logMsg("POST count query failed: " . $conn->error);
-        echo json_encode(["success" => false, "error" => "Failed to generate voucher number"]);
-        break;
+      // Generate next voucher number based on the latest existing voucher
+      $result = $conn->query("SELECT voucher_no FROM disbursements ORDER BY id DESC LIMIT 1");
+      if ($result === false) {
+          logMsg("POST voucher fetch failed: " . $conn->error);
+          echo json_encode(["success" => false, "error" => "Failed to fetch latest voucher"]);
+          break;
       }
-      $row = $res->fetch_assoc();
-      $count = (int)$row['count'] + 1;
-      $voucher_no = "VCH-" . str_pad($count, 3, "0", STR_PAD_LEFT);
 
+      if ($result->num_rows > 0) {
+          $row = $result->fetch_assoc();
+          $last_voucher = $row['voucher_no'];
+
+          // Extract numeric part (e.g. from VCH-005 → 5)
+          $num = (int)substr($last_voucher, 4);
+
+          // Increment and format (e.g. 6 → VCH-006)
+          $new_num = $num + 1;
+          $voucher_no = "VCH-" . str_pad($new_num, 3, "0", STR_PAD_LEFT);
+      } else {
+          // No existing vouchers, start from VCH-001
+          $voucher_no = "VCH-001";
+      }
+
+      // Insert new disbursement
       $stmt = $conn->prepare("INSERT INTO disbursements (voucher_no, vendor, category, amount, status, disbursement_date) VALUES (?, ?, ?, ?, ?, ?)");
       if (!$stmt) {
-        logMsg("POST prepare failed: " . $conn->error);
-        echo json_encode(["success" => false, "error" => "Insert prepare failed"]);
-        break;
+          logMsg("POST prepare failed: " . $conn->error);
+          echo json_encode(["success" => false, "error" => "Insert prepare failed"]);
+          break;
       }
 
       // Use correct types: sssdss (amount as double)
