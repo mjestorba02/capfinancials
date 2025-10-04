@@ -69,29 +69,50 @@ switch ($method) {
 
     // ===================== PUT =====================
     case "PUT":
-        // ⚠️ PHP uses error_log(), not console.log()
-        error_log("PUT request triggered");
+        // ✅ Helper debug function
+        function debug_log($msg) {
+            error_log("[collections.php DEBUG] " . $msg);
+        }
+
+        debug_log("PUT request triggered");
 
         $data = json_decode(file_get_contents("php://input"), true);
+        debug_log("Raw input: " . json_encode($data));
 
-        // ✅ Replace your old echo+exit with this
-        if (!isset($data['invoice_no'])) {
+        // Check if invoice_no is provided
+        if (empty($data['invoice_no'])) {
+            debug_log("Missing invoice_no in request");
             safe_json_response(["success" => false, "error" => "Invoice number required"], 400);
         }
 
         $invoice_no = $data['invoice_no'];
+        debug_log("Invoice number: " . $invoice_no);
 
         // Fetch existing record
         $res = $conn->prepare("SELECT customer, department, amount, status, date FROM collections WHERE invoice_no=?");
+        if (!$res) {
+            debug_log("Prepare failed: " . $conn->error);
+            safe_json_response(["success" => false, "error" => "DB prepare failed"], 500);
+        }
+
         $res->bind_param("s", $invoice_no);
         $res->execute();
         $res->bind_result($db_customer, $db_department, $db_amount, $db_status, $db_date);
-        $res->fetch();
+        $fetched = $res->fetch();
         $res->close();
 
-        if (!$db_customer && !$db_department && !$db_amount) {
+        if (!$fetched) {
+            debug_log("No collection found for invoice_no = " . $invoice_no);
             safe_json_response(["success" => false, "error" => "Collection not found"], 404);
         }
+
+        debug_log("Existing data: " . json_encode([
+            "customer" => $db_customer,
+            "department" => $db_department,
+            "amount" => $db_amount,
+            "status" => $db_status,
+            "date" => $db_date
+        ]));
 
         // Merge new data with old
         $customer   = $data['customer']   ?? $db_customer;
@@ -100,15 +121,30 @@ switch ($method) {
         $status     = $data['status']     ?? $db_status;
         $date       = $data['date']       ?? $db_date;
 
-        // Update
+        debug_log("Merged data: " . json_encode([
+            "customer" => $customer,
+            "department" => $department,
+            "amount" => $amount,
+            "status" => $status,
+            "date" => $date
+        ]));
+
+        // Update query
         $stmt = $conn->prepare("UPDATE collections 
                                 SET customer=?, department=?, amount=?, status=?, date=? 
                                 WHERE invoice_no=?");
+        if (!$stmt) {
+            debug_log("Update prepare failed: " . $conn->error);
+            safe_json_response(["success" => false, "error" => "Update prepare failed"], 500);
+        }
+
         $stmt->bind_param("ssdsss", $customer, $department, $amount, $status, $date, $invoice_no);
         $updateSuccess = $stmt->execute();
+        debug_log("Update executed. Success=" . ($updateSuccess ? "true" : "false"));
 
         // Journal entry if Paid
         if ($status === "Paid") {
+            debug_log("Creating journal entry for invoice_no = " . $invoice_no);
             $account = "Accounts Receivable";
             $description = "Payment approved for Invoice #$invoice_no from $customer";
             $entry_date = date("Y-m-d");
@@ -119,9 +155,11 @@ switch ($method) {
             $module = "collections";
             $jstmt->bind_param("sssiss", $entry_date, $account, $description, $amount, $module, $invoice_no);
             $jstmt->execute();
+            debug_log("Journal entry created.");
         }
 
         // Notifications
+        debug_log("Creating notification...");
         $notif_stmt = $conn->prepare("INSERT INTO notifications (module, record_id, message, link) VALUES (?, ?, ?, ?)");
         if ($notif_stmt) {
             $module = 'collections';
@@ -130,6 +168,9 @@ switch ($method) {
             $link = "sales_invoices.php?invoice_no=" . urlencode($invoice_no);
             $notif_stmt->bind_param("ssss", $module, $record_id, $msg, $link);
             $notif_stmt->execute();
+            debug_log("Notification created successfully.");
+        } else {
+            debug_log("Notification prepare failed: " . $conn->error);
         }
 
         safe_json_response([
