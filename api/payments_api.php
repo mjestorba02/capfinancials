@@ -7,6 +7,11 @@ header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 $method = $_SERVER['REQUEST_METHOD'];
 
+// Debug incoming request
+file_put_contents(__DIR__ . "/debug_put.txt", 
+    date("Y-m-d H:i:s") . " METHOD=" . $_SERVER['REQUEST_METHOD'] . "\n", 
+    FILE_APPEND);
+
 // Generate Payment ID
 function generatePaymentId($conn) {
     $result = $conn->query("SELECT payment_id FROM payments ORDER BY id DESC LIMIT 1");
