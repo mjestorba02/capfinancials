@@ -12,6 +12,8 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 
+error_log("✅ collections.php loaded");
+
 function safe_json_response($data, $status_code = 200) {
     http_response_code($status_code);
     echo json_encode($data);
