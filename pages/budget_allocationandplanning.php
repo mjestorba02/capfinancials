@@ -292,14 +292,15 @@ document.getElementById("calculateUsedForm").addEventListener("submit", async fu
   }
 });
 
-// Add Allocation modal
 async function loadDepartments() {
-  const res = await fetch(budgetApi);
+  const res = await fetch(`${budgetApi}?available=true`);
   const data = await res.json();
   const select = document.getElementById("departmentSelect");
-  select.innerHTML = "<option value=\"\">Select Department</option>";
+  select.innerHTML = `<option value="">Select Department</option>`;
   data.forEach(d => {
-    select.innerHTML += `<option value="${d.department}" data-amount="${d.amount}">${d.department} - ₱${parseFloat(d.amount).toLocaleString()}</option>`;
+    select.innerHTML += `<option value="${d.department}" data-amount="${d.amount}">
+      ${d.department} - ₱${parseFloat(d.amount).toLocaleString()}
+    </option>`;
   });
 }
 

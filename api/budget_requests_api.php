@@ -19,7 +19,21 @@ error_log("[budget_requests_api.php DEBUG] Request method: " . $method);
 switch ($method) {
     case "GET":
         error_log("[budget_requests_api.php DEBUG] GET request triggered");
-        $res = $conn->query("SELECT * FROM budget_requests ORDER BY created_at DESC");
+
+        // If ?available=true, return only departments not in allocations & not approved
+        if (isset($_GET['available']) && $_GET['available'] == 'true') {
+            $query = "
+                SELECT * FROM budget_requests
+                WHERE department NOT IN (SELECT department FROM allocations)
+                AND status != 'Approved'
+                ORDER BY created_at DESC
+            ";
+            error_log("[budget_requests_api.php DEBUG] Filtering available departments only");
+        } else {
+            $query = "SELECT * FROM budget_requests ORDER BY created_at DESC";
+        }
+
+        $res = $conn->query($query);
 
         if (!$res) {
             error_log("[budget_requests_api.php ERROR] SQL Error: " . $conn->error);
