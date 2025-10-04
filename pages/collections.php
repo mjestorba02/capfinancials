@@ -103,17 +103,17 @@ $children = '
   </div>
 </div>
 
-    <!-- Approve Confirmation Modal -->
-    <div id="approveModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-      <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-        <h2 class="text-xl font-bold mb-4">Confirm Approval</h2>
-        <p class="text-sm text-slate-600">Are you sure you want to mark collection <span id="approveInvoice" class="font-medium"></span> as <span class="font-semibold">Paid</span>?</p>
-        <div class="flex justify-end gap-3 mt-6">
-          <button type="button" onclick="closeApproveModal()" class="px-4 py-2 bg-gray-200 rounded">Cancel</button>
-          <button id="confirmApproveBtn" type="button" onclick="approveCollectionFromModal()" class="px-4 py-2 bg-green-600 text-white rounded">Confirm</button>
-        </div>
-      </div>
+<!-- Approve Confirmation Modal -->
+<div id="approveModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+    <h2 class="text-xl font-bold mb-4">Confirm Approval</h2>
+    <p class="text-sm text-slate-600">Are you sure you want to mark collection <span id="approveInvoice" class="font-medium"></span> as <span class="font-semibold">Paid</span>?</p>
+    <div class="flex justify-end gap-3 mt-6">
+      <button type="button" onclick="closeApproveModal()" class="px-4 py-2 bg-gray-200 rounded">Cancel</button>
+      <button id="confirmApproveBtn" type="button" onclick="approveCollectionFromModal()" class="px-4 py-2 bg-green-600 text-white rounded">Confirm</button>
     </div>
+  </div>
+</div>
 
 <!-- Boxicons + Toastify -->
 <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
