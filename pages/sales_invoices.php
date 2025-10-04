@@ -50,8 +50,16 @@ $children = '
     <div class="overflow-x-auto">
       <!-- Debug panel (hidden by default) -->
       <div id="siDebug" class="mb-4 text-sm text-slate-500" style="display:none;"></div>
-      <div class="flex justify-between items-center mb-4">
+      <div class="flex items-center gap-4">
         <h3 class="text-lg font-semibold">Sales Invoices List</h3>
+        <div class="flex items-center gap-2">
+          <label class="text-sm text-slate-600">From:</label>
+          <input type="date" id="filterFrom" class="border rounded px-2 py-1 text-sm" />
+          <label class="text-sm text-slate-600">To:</label>
+          <input type="date" id="filterTo" class="border rounded px-2 py-1 text-sm" />
+          <button id="filterBtn" class="px-3 py-1 bg-indigo-500 text-white text-sm rounded">Filter</button>
+          <button id="resetFilterBtn" class="px-3 py-1 bg-gray-300 text-sm rounded">Reset</button>
+        </div>
       </div>
 
   <table id="collectionsTable" class="min-w-full text-sm">
@@ -250,6 +258,49 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!modal) return;
     modal.classList.add("hidden");
     modal.classList.remove("flex");
+  }
+});
+
+// ===================== FILTER BY DATE =====================
+document.addEventListener("DOMContentLoaded", () => {
+  const filterBtn = document.getElementById("filterBtn");
+  const resetFilterBtn = document.getElementById("resetFilterBtn");
+  const fromInput = document.getElementById("filterFrom");
+  const toInput = document.getElementById("filterTo");
+  const table = document.getElementById("collectionsTable");
+
+  if (filterBtn && table) {
+    filterBtn.addEventListener("click", () => {
+      const fromDate = new Date(fromInput.value);
+      const toDate = new Date(toInput.value);
+      const rows = table.querySelectorAll("tbody tr");
+
+      if (!fromInput.value || !toInput.value) {
+        showToast("Please select both From and To dates", "error");
+        return;
+      }
+
+      rows.forEach(row => {
+        const dateCell = row.querySelector("td:nth-child(6)");
+        if (!dateCell) return;
+        const dateValue = new Date(dateCell.textContent.trim());
+        if (dateValue >= fromDate && dateValue <= toDate) {
+          row.style.display = "";
+        } else {
+          row.style.display = "none";
+        }
+      });
+    });
+  }
+
+  if (resetFilterBtn) {
+    resetFilterBtn.addEventListener("click", () => {
+      fromInput.value = "";
+      toInput.value = "";
+      const rows = table.querySelectorAll("tbody tr");
+      rows.forEach(r => (r.style.display = ""));
+      showToast("Filters cleared", "success");
+    });
   }
 });
 </script>
