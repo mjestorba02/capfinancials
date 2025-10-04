@@ -1,4 +1,10 @@
 <?php
+
+ini_set("log_errors", 1);
+ini_set("error_log", __DIR__ . "/budget_error.log");
+error_log("=== Budget API hit: " . $_SERVER['REQUEST_METHOD'] . " ===");
+
+
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");

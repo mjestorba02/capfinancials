@@ -106,76 +106,106 @@ $children = '
 
 adminLayout($children);
 ?>
-<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
 const apiUrl = "https://financial.health-ease-hospital.com/api/budget_requests_api.php";
 
-// Toast function
+// Toast helper
 function showToast(message, type) {
   Toastify({
     text: message,
+    duration: 4000,
+    close: true,
     style: {
       background: type === "success"
         ? "linear-gradient(to right, #00b09b, #96c93d)"
         : "linear-gradient(to right, #ff5f6d, #ffc371)"
-    },
-    duration: 3000,
-    close: true
+    }
   }).showToast();
 }
 
 // Load table data
 async function loadRequests() {
-  const res = await fetch(apiUrl);
-  const data = await res.json();
-  const tbody = document.getElementById("budgetTableBody");
-  tbody.innerHTML = "";
+  try {
+    const res = await fetch(apiUrl);
+    const data = await res.json();
+    const tbody = document.getElementById("budgetTableBody");
+    tbody.innerHTML = "";
 
-  data.forEach(req => {
-    tbody.innerHTML += `
-      <tr>
-        <td class="px-4 py-3 font-medium">${req.request_id}</td>
-        <td class="px-4 py-3">${req.department}</td>
-        <td class="px-4 py-3">${req.purpose}</td>
-        <td class="px-4 py-3 text-green-600">₱${parseFloat(req.amount).toLocaleString()}</td>
-        <td class="px-4 py-3"><span class="font-semibold ${req.status === "Pending" ? "text-yellow-600" : "text-green-600"}">${req.status}</span></td>
-        <td class="px-4 py-3">${req.request_date}</td>
-        <td class="px-4 py-3 text-right space-x-2">
-          ${req.status !== "Approved" ? `
-          <button class="text-green-600 hover:text-green-800" onclick="openApproveModal(${req.id})" title="Approve">
-            <i class="bx bx-check-circle text-xl"></i>
-          </button>` : ''}
-
-          <button class="text-red-600 hover:text-red-800" onclick="openDeleteModal(${req.id})" title="Delete">
-            <i class="bx bx-trash text-xl"></i>
-          </button>
-        </td>
-      </tr>
-    `;
-  });
+    data.forEach(req => {
+      tbody.innerHTML += `
+        <tr>
+          <td class="px-4 py-3 font-medium">${req.request_id}</td>
+          <td class="px-4 py-3">${req.department}</td>
+          <td class="px-4 py-3">${req.purpose}</td>
+          <td class="px-4 py-3 text-green-600">₱${parseFloat(req.amount).toLocaleString()}</td>
+          <td class="px-4 py-3">${req.status || "Pending"}</td>
+          <td class="px-4 py-3">${req.request_date || "-"}</td>
+          <td class="px-4 py-3 text-right">
+            <button class="text-red-600 hover:text-red-800" onclick="openDeleteModal(${req.id})">
+              <i class="bx bx-trash text-xl"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+  } catch (err) {
+    console.error("Fetch error:", err);
+    showToast("Failed to load budget requests.", "error");
+  }
 }
 
-// Handle form submit (New request)
-document.getElementById("requestForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const department = document.getElementById("department").value;
-  const purpose = document.getElementById("purpose").value;
-  const amount = document.getElementById("amount").value;
+// Handle modal open/close
+function openModal() {
+  document.getElementById("requestModal").classList.remove("hidden");
+}
+function closeModal() {
+  document.getElementById("requestModal").classList.add("hidden");
+  document.getElementById("requestForm").reset();
+}
 
-  const res = await fetch(apiUrl, {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ department, purpose, amount })
+// Handle form submit
+document.addEventListener("DOMContentLoaded", () => {
+  loadRequests();
+
+  const form = document.getElementById("requestForm");
+  if (!form) return console.error("Form not found!");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const department = document.getElementById("department").value.trim();
+    const purpose = document.getElementById("purpose").value.trim();
+    const amount = document.getElementById("amount").value.trim();
+
+    if (!department || !purpose || !amount) {
+      showToast("Please fill in all fields.", "error");
+      return;
+    }
+
+    try {
+      console.log("Submitting to API:", { department, purpose, amount });
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ department, purpose, amount })
+      });
+
+      const result = await response.json();
+      console.log("API response:", result);
+
+      if (result.success) {
+        showToast("Request added successfully!", "success");
+        closeModal();
+        loadRequests();
+      } else {
+        showToast(result.error || "Submission failed.", "error");
+      }
+    } catch (error) {
+      console.error("Submit error:", error);
+      showToast("Could not submit request. Check logs or API.", "error");
+    }
   });
-  const result = await res.json();
-  if (result.success) {
-    closeModal();
-    showToast(result.message, "success");
-    loadRequests();
-  } else {
-    showToast(result.error, "error");
-  }
 });
 
 // Approve request
