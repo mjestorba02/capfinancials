@@ -344,7 +344,7 @@ document.getElementById("allocationForm").addEventListener("submit", async funct
 
     closeAddAllocationModal();
     loadAllocations();
-    alert("Allocation added successfully!");
+    loadRequests();
   } else alert("Error: "+result.error);
 });
 
