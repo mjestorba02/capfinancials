@@ -205,27 +205,55 @@ async function approveCollectionFromModal() {
   const invoice_no = _pendingApproveInvoice;
   if (!invoice_no) return;
 
-  // disable confirm button while request runs
   const btn = document.getElementById('confirmApproveBtn');
   btn.disabled = true;
 
   try {
+    // Fetch the full collection record first
+    const fetchRes = await fetch(`${apiUrl}?invoice_no=${invoice_no}`);
+    const collection = await fetchRes.json();
+
+    if (!collection || !collection.data) {
+      showToast('Collection not found.', 'error');
+      btn.disabled = false;
+      return;
+    }
+
+    const { customer, department, amount, date } = collection.data;
+
+    // Now send PUT request with all required fields
     const res = await fetch(apiUrl, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ invoice_no, status: 'Paid' })
+      body: JSON.stringify({
+        invoice_no,
+        customer,
+        department,
+        amount,
+        date,
+        status: 'Paid'
+      })
     });
 
-    const result = await res.json();
-    if (result && result.success) {
-      showToast('Collection ' + invoice_no + ' marked as Paid.', 'success');
+    const resultText = await res.text();
+    console.log('Raw response:', resultText);
+
+    let result;
+    try {
+      result = JSON.parse(resultText);
+    } catch {
+      throw new Error('Invalid JSON from server');
+    }
+
+    if (result.success) {
+      showToast(`Collection ${invoice_no} marked as Paid.`, 'success');
       closeApproveModal();
       loadCollections();
     } else {
-      showToast('Failed to approve collection.', 'error');
+      showToast(result.error || 'Failed to approve collection.', 'error');
     }
   } catch (err) {
-    console.error(err);
+    console.error('Approve error:', err);
     showToast('Error: Unable to reach server.', 'error');
   } finally {
     btn.disabled = false;
