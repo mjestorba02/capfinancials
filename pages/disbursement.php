@@ -271,36 +271,33 @@ document.getElementById("disbursementForm").addEventListener("submit", async (e)
   e.preventDefault();
 
   const id = document.getElementById("disbursementId").value;
-  const payload = {
-    vendor: document.getElementById("vendorInput").value,
-    category: document.getElementById("categoryInput").value,
-    amount: document.getElementById("amountInput").value,
-    status: document.getElementById("statusInput").value,
-    disbursement_date: document.getElementById("dateInput").value
-  };
+  const formData = new FormData();
+  formData.append("vendor", document.getElementById("vendorInput").value);
+  formData.append("category", document.getElementById("categoryInput").value);
+  formData.append("amount", document.getElementById("amountInput").value);
+  formData.append("status", document.getElementById("statusInput").value);
+  formData.append("disbursement_date", document.getElementById("dateInput").value);
 
-  let res;
-  if (id) {
-    payload.id = id;
-    res = await fetch(apiUrl, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+  let method = id ? "PUT" : "POST";
+  if (id) formData.append("id", id);
+
+  try {
+    const res = await fetch(apiUrl, {
+      method,
+      body: formData
     });
-  } else {
-    res = await fetch(apiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-  }
-  const result = await res.json();
-  if (result.success) {
-    showToast("Disbursement saved successfully!", "success");
-    closeModal();
-    loadDisbursements();
-  } else {
-    showToast("Error: " + result.error, "error");
+    const result = await res.json();
+
+    if (result.success) {
+      showToast("Disbursement saved successfully!", "success");
+      closeModal();
+      loadDisbursements();
+    } else {
+      showToast("Error: " + (result.error || "Unknown error"), "error");
+    }
+  } catch (err) {
+    console.error("Save error:", err);
+    showToast("Failed to save disbursement.", "error");
   }
 });
 
