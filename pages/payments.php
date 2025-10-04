@@ -339,11 +339,15 @@ document.getElementById("paymentForm").addEventListener("submit", async (e) => {
       try { result = await res.json(); } catch { result = {}; }
 
       if (result.success) {
-        showToast("Payment approved successfully! Amount ₱" + result.amount, "success");
+        const approvedAmt = result.amount ?? payment.amount ?? 0;
+        showToast("Payment approved successfully! Amount ₱" + parseFloat(approvedAmt).toLocaleString(), "success");
         loadPayments();
         closeApproveModal();
       } else {
-        showToast("Error approving payment", "error");
+        // show server message or generic error
+        const errMsg = result.message || result.error || "Error approving payment";
+        showToast(errMsg, "error");
+        console.error("Approve API failed:", result);
       }
     } catch (err) {
       console.error(err);
