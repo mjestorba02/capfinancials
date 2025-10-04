@@ -9,7 +9,7 @@ if (!$data || empty($data['invoice_no'])) {
     exit;
 }
 
-$external = 'https://financial.health-ease-hospital.com/api/collections.php';
+$external = 'http://localhost/prefect/api/collections.php';
 
 $ch = curl_init($external);
 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');

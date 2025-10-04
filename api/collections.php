@@ -4,12 +4,19 @@ ini_set('display_errors', 0); // don't echo errors in response
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/error_log'); // log instead of output
 header('Content-Type: application/json');
+error_log("Request method: " . $_SERVER['REQUEST_METHOD']);
 
 
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+
+function safe_json_response($data, $status_code = 200) {
+    http_response_code($status_code);
+    echo json_encode($data);
+    exit;
+}
 
 include "db.php"; // adjust path to your db connection
 
@@ -67,9 +74,9 @@ switch ($method) {
 
         $data = json_decode(file_get_contents("php://input"), true);
 
-        if (empty($data['invoice_no'])) {
-            echo json_encode(["success" => false, "error" => "Invoice number required"]);
-            exit;
+        // ✅ Replace your old echo+exit with this
+        if (!isset($data['invoice_no'])) {
+            safe_json_response(["success" => false, "error" => "Invoice number required"], 400);
         }
 
         $invoice_no = $data['invoice_no'];
@@ -83,8 +90,7 @@ switch ($method) {
         $res->close();
 
         if (!$db_customer && !$db_department && !$db_amount) {
-            echo json_encode(["success" => false, "error" => "Collection not found"]);
-            exit;
+            safe_json_response(["success" => false, "error" => "Collection not found"], 404);
         }
 
         // Merge new data with old
@@ -126,7 +132,7 @@ switch ($method) {
             $notif_stmt->execute();
         }
 
-        echo json_encode([
+        safe_json_response([
             "success" => true,
             "message" => $updateSuccess ? "Collection updated successfully" : "Collection update attempted"
         ]);
