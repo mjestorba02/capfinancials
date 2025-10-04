@@ -265,12 +265,15 @@ function openAddModal() {
   loadVendors();
   modal.classList.remove("hidden");
 }
-function closeModal() { modal.classList.add("hidden"); }
+
+function closeModal() {
+  modal.classList.add("hidden");
+}
 
 document.getElementById("disbursementForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const id = document.getElementById("disbursementId").value;
+  const id = document.getElementById("disbursementId").value.trim();
   const formData = new FormData();
   formData.append("vendor", document.getElementById("vendorInput").value);
   formData.append("category", document.getElementById("categoryInput").value);
@@ -278,26 +281,38 @@ document.getElementById("disbursementForm").addEventListener("submit", async (e)
   formData.append("status", document.getElementById("statusInput").value);
   formData.append("disbursement_date", document.getElementById("dateInput").value);
 
-  let method = id ? "PUT" : "POST";
+  let method = id ? "POST" : "POST"; // use POST for all since PHP may not handle PUT well
   if (id) formData.append("id", id);
+  formData.append("action", id ? "update" : "add");
 
   try {
     const res = await fetch(apiUrl, {
       method,
-      body: formData
+      body: formData,
     });
-    const result = await res.json();
+
+    // Try to parse JSON safely
+    const text = await res.text();
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch (jsonErr) {
+      console.error("Invalid JSON response:", text);
+      showToast("Server returned invalid response.", "error");
+      return;
+    }
 
     if (result.success) {
-      showToast("Disbursement saved successfully!", "success");
+      showToast("✅ Disbursement saved successfully!", "success");
       closeModal();
       loadDisbursements();
     } else {
-      showToast("Error: " + (result.error || "Unknown error"), "error");
+      console.error("Save failed:", result.error);
+      showToast("❌ Error: " + (result.error || "Unknown error"), "error");
     }
   } catch (err) {
     console.error("Save error:", err);
-    showToast("Failed to save disbursement.", "error");
+    showToast("⚠️ Failed to save disbursement.", "error");
   }
 });
 
