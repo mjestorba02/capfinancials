@@ -292,56 +292,15 @@ document.getElementById("calculateUsedForm").addEventListener("submit", async fu
   }
 });
 
+// Add Allocation modal
 async function loadDepartments() {
+  const res = await fetch(budgetApi);
+  const data = await res.json();
   const select = document.getElementById("departmentSelect");
-  select.innerHTML = "<option value=''>Select Department</option>";
-
-  try {
-    // Fetch all budget requests
-    const res = await fetch(budgetApi);
-    const data = await res.json();
-    console.log("[DEBUG] Loaded budget requests:", data);
-
-    // Fetch existing allocations
-    const allocationsRes = await fetch(allocationApi);
-    const allocations = await allocationsRes.json();
-    console.log("[DEBUG] Loaded allocations:", allocations);
-
-    // Get allocated request IDs
-    const allocatedIds = Array.isArray(allocations)
-      ? allocations.map(a => parseInt(a.request_id))
-      : [];
-
-    // Filter: only show unallocated requests with valid data
-    const unallocated = Array.isArray(data)
-      ? data.filter(d =>
-          d && d.id && !allocatedIds.includes(parseInt(d.id))
-        )
-      : [];
-
-    if (unallocated.length === 0) {
-      select.innerHTML += `<option disabled>No unallocated departments available</option>`;
-      console.warn("[DEBUG] No available unallocated departments found.");
-      return;
-    }
-
-    // Populate dropdown
-    unallocated.forEach(d => {
-      const dept = d.department || "Unnamed Department";
-      const amount = parseFloat(d.amount || 0).toLocaleString();
-      select.innerHTML += `
-        <option 
-          value="${d.id}" 
-          data-department="${dept}" 
-          data-amount="${d.amount}">
-          ${dept} - ₱${amount}
-        </option>`;
-    });
-
-  } catch (err) {
-    console.error("[ERROR] Failed to load departments:", err);
-    select.innerHTML = "<option disabled>Error loading departments</option>";
-  }
+  select.innerHTML = "<option value=\"\">Select Department</option>";
+  data.forEach(d => {
+    select.innerHTML += `<option value="${d.department}" data-amount="${d.amount}">${d.department} - ₱${parseFloat(d.amount).toLocaleString()}</option>`;
+  });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -351,58 +310,23 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Handle allocation form submission
-document.getElementById("allocationForm").addEventListener("submit", async function(e) {
+document.getElementById("allocationForm").addEventListener("submit", async function(e){
   e.preventDefault();
+  const department = document.getElementById("departmentSelect").value;
+  const project = document.getElementById("project").value;
+  const allocated = document.getElementById("allocated").value;
 
-  const request_id = document.getElementById("departmentSelect").value;
-
-  // Ensure something was selected
-  if (!request_id) {
-    alert("Please select a department/category first.");
-    return;
-  }
-
-  const selectedOption = document.querySelector(`#departmentSelect option[value="${request_id}"]`);
-  const department = selectedOption ? selectedOption.dataset.department : "";
-  const project = document.getElementById("project").value.trim();
-  const allocated = document.getElementById("allocated").value.trim();
-
-  if (!project || !allocated) {
-    alert("Please fill out all fields before saving.");
-    return;
-  }
-
-  console.log("[DEBUG] Sending data:", { request_id, department, project, allocated });
-
-  try {
-    const res = await fetch(allocationApi, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ request_id, department, project, allocated })
-    });
-
-    const result = await res.json();
-    console.log("[DEBUG] API response:", result);
-
-    if (result.success) {
-      // Close modal and reload both tables
-      closeAddAllocationModal();
-      await loadAllocations();
-      await loadRequests(); // refresh to reflect Approved status
-      Toastify({
-        text: "✅ Allocation added successfully!",
-        style: { background: "#16a34a" },
-        duration: 3000,
-        close: true
-      }).showToast();
-    } else {
-      alert("Error: " + (result.error || "Unknown error"));
-    }
-  } catch (error) {
-    console.error("[ERROR] Allocation submission failed:", error);
-    alert("An unexpected error occurred. Check console for details.");
-  }
+  const res = await fetch(allocationApi, {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ department, project, allocated })
+  });
+  const result = await res.json();
+  if(result.success){
+    closeAddAllocationModal();
+    loadAllocations();
+    alert("Allocation added successfully!");
+  } else alert("Error: "+result.error);
 });
 
 function openAddAllocationModal() {
