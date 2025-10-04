@@ -340,23 +340,14 @@ document.getElementById("paymentForm").addEventListener("submit", async (e) => {
 
       if (result.success) {
         const approvedAmt = result.amount ?? payment.amount ?? 0;
-        showToast(
-          "Payment approved successfully! Amount ₱" + parseFloat(approvedAmt).toLocaleString(),
-          "success"
-        );
+        showToast("Payment approved successfully! Amount ₱" + parseFloat(approvedAmt).toLocaleString(), "success");
         loadPayments();
         closeApproveModal();
       } else {
-        // Display the *actual* error returned by the API
-        const errMsg =
-          result.message ||
-          result.error ||
-          result.sql_error ||
-          result.stmt_error ||
-          "Unknown error occurred while approving payment";
-
-        showToast("Error approving payment: " + errMsg, "error");
-        console.error("Approve Payment API error →", result);
+        // show server message or generic error
+        const errMsg = result.message || result.error || "Error approving payment";
+        showToast(errMsg, "error");
+        console.error("Approve API failed:", result);
       }
     } catch (err) {
       console.error(err);
