@@ -89,19 +89,6 @@ switch ($method) {
         $stmt->bind_param("ssdsss", $customer, $department, $amount, $status, $date, $invoice_no);
         $updateSuccess = $stmt->execute();
 
-        // 🔹 Notifications
-        $notif_stmt = @$conn->prepare(
-            "INSERT INTO notifications (module, record_id, message, link) VALUES (?, ?, ?, ?)"
-        );
-        if ($notif_stmt) {
-            $module = 'collections';
-            $record_id = $invoice_no;
-            $msg = "Collection #$invoice_no updated. Status: $status";
-            $link = "sales_invoices.php?invoice_no=" . urlencode($invoice_no);
-            @$notif_stmt->bind_param("ssss", $module, $record_id, $msg, $link);
-            @$notif_stmt->execute();
-        }
-
         echo json_encode([
             "success" => true,
             "message" => $updateSuccess ? "Collection updated successfully" : "Collection update attempted"
