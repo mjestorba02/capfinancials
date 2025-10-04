@@ -123,69 +123,167 @@ switch ($method) {
     break;
 
   case "PUT":
+    $raw = file_get_contents("php://input");
+    $data = json_decode($raw, true);
+
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        echo json_encode([
+            "success" => false,
+            "stage" => "json_decode",
+            "error" => json_last_error_msg(),
+            "raw" => $raw
+        ]);
+        break;
+    }
+
+    $id = isset($data['id']) ? intval($data['id']) : 0;
+    if (!$id) {
+        echo json_encode(["success" => false, "stage" => "id_check", "error" => "Missing ID"]);
+        break;
+    }
+
+    $fields = [];
+    $params = [];
+    $types = "";
+
+    if (isset($data['vendor'])) {
+        $fields[] = "vendor=?";
+        $params[] = $data['vendor'];
+        $types .= "s";
+    }
+    if (isset($data['category'])) {
+        $fields[] = "category=?";
+        $params[] = $data['category'];
+        $types .= "s";
+    }
+    if (isset($data['amount'])) {
+        $fields[] = "amount=?";
+        $params[] = floatval($data['amount']);
+        $types .= "d";
+    }
+    if (isset($data['status'])) {
+        $fields[] = "status=?";
+        $params[] = $data['status'];
+        $types .= "s";
+    }
+    if (isset($data['disbursement_date'])) {
+        $fields[] = "disbursement_date=?";
+        $params[] = $data['disbursement_date'];
+        $types .= "s";
+    }
+
+    if (empty($fields)) {
+        echo json_encode(["success" => false, "stage" => "fields_check", "error" => "No fields to update"]);
+        break;
+    }
+
+    $sql = "UPDATE disbursements SET " . implode(", ", $fields) . " WHERE id=?";
+    $params[] = $id;
+    $types .= "i";
+
+    error_log("DEBUG PUT SQL: " . $sql);
+    error_log("DEBUG PARAMS: " . print_r($params, true));
+
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        echo json_encode([
+            "success" => false,
+            "stage" => "prepare",
+            "sql" => $sql,
+            "error" => $conn->error
+        ]);
+        break;
+    }
+
+    $bind_names = [];
+    $bind_names[] = $types;
+    for ($i = 0; $i < count($params); $i++) {
+        ${"param".$i} = $params[$i];
+        $bind_names[] = &${"param".$i};
+    }
+
+    if (!call_user_func_array([$stmt, 'bind_param'], $bind_names)) {
+        echo json_encode(["success" => false, "stage" => "bind_param", "error" => $stmt->error]);
+        break;
+    }
+
+    if (!$stmt->execute()) {
+        echo json_encode(["success" => false, "stage" => "execute", "error" => $stmt->error]);
+        break;
+    }
+
+    error_log("DEBUG: Disbursement update OK, ID = $id");
+
+    $warnings = [];
+
+    // Insert notification
     try {
-        $data = json_decode(file_get_contents("php://input"), true);
-        if (!$data || !isset($data['id'])) throw new Exception("Missing ID or invalid JSON");
-
-        $id = intval($data['id']);
-        $fields = [];
-        $params = [];
-        $types  = "";
-
-        if (isset($data['vendor'])) { $fields[] = "vendor=?"; $params[] = $data['vendor']; $types .= "s"; }
-        if (isset($data['category'])) { $fields[] = "category=?"; $params[] = $data['category']; $types .= "s"; }
-        if (isset($data['amount'])) { $fields[] = "amount=?"; $params[] = $data['amount']; $types .= "d"; }
-        if (isset($data['status'])) { $fields[] = "status=?"; $params[] = $data['status']; $types .= "s"; }
-        if (isset($data['disbursement_date'])) { $fields[] = "disbursement_date=?"; $params[] = $data['disbursement_date']; $types .= "s"; }
-
-        if (!empty($fields)) {
-            $sql = "UPDATE disbursements SET " . implode(", ", $fields) . " WHERE id=?";
-            $stmt = $conn->prepare($sql);
-            $types .= "i";
-            $params[] = $id;
-            $stmt->bind_param($types, ...$params);
-
-            if ($stmt->execute()) {
-                if ($stmt->affected_rows > 0) {
-                    // Insert into journal_entries if status is Approved or Paid
-                    if (isset($data['status']) && strtolower(trim($data['status'])) === 'approved') {
-                        $vendor = $data['vendor'] ?? 'Unknown Vendor';
-                        $amount = $data['amount'] ?? 0;
-                        $category = $data['category'] ?? 'Disbursement';
-                        $date = $data['disbursement_date'] ?? date('Y-m-d');
-
-                        $desc = "Approved disbursement for {$vendor}";
-                        $entry_sql = "INSERT INTO journal_entries (reference_type, reference_id, description, debit, credit, date) VALUES (?, ?, ?, ?, ?, ?)";
-                        $entry_stmt = $conn->prepare($entry_sql);
-                        $ref_type = 'Disbursement';
-                        $debit = $amount;
-                        $credit = 0.00;
-                        $entry_stmt->bind_param("sissds", $ref_type, $id, $desc, $debit, $credit, $date);
-
-                        if ($entry_stmt->execute()) {
-                            logMsg("Journal entry added for disbursement ID $id");
-                        } else {
-                            logMsg("Journal insert failed: " . $entry_stmt->error);
-                        }
-                    }
-
-                    echo json_encode(["success" => true]);
-                } else {
-                    logMsg("PUT no change: ID $id");
-                    echo json_encode(["success" => false, "error" => "No changes made"]);
-                }
-            } else {
-                logMsg("PUT failed: " . $stmt->error);
-                echo json_encode(["success" => false, "error" => "Update failed"]);
+        $msg = "Disbursement #$id updated";
+        $link = "disbursement.php?id=" . $id;
+        $notif_stmt = $conn->prepare("INSERT INTO notifications (message, link) VALUES (?, ?)");
+        if ($notif_stmt) {
+            $notif_stmt->bind_param("ss", $msg, $link);
+            if (!$notif_stmt->execute()) {
+                $warnings[] = "Notification insert failed: " . $notif_stmt->error;
             }
         } else {
-            logMsg("PUT invalid fields for ID $id");
-            echo json_encode(["success" => false, "error" => "No valid fields to update"]);
+            $warnings[] = "Notification prepare failed: " . $conn->error;
         }
-    } catch (Exception $e) {
-        logMsg("PUT error: " . $e->getMessage());
-        echo json_encode(["success" => false, "error" => "Server error"]);
+    } catch (Throwable $t) {
+        $warnings[] = "Notification exception: " . $t->getMessage();
     }
+
+    // Fetch updated record
+    $current = getDisbursementById($conn, $id);
+    $effectiveAmount = isset($data['amount']) ? floatval($data['amount']) : (float)($current['amount'] ?? 0);
+    $effectiveVendor = isset($data['vendor']) ? $data['vendor'] : ($current['vendor'] ?? '');
+    $effectiveDate = isset($data['disbursement_date']) ? $data['disbursement_date'] : ($current['disbursement_date'] ?? date('Y-m-d'));
+
+    // Insert journal entries if status == Approved
+    if (isset($data['status']) && strtolower($data['status']) === "approved") {
+        try {
+            $sql_journal = "INSERT INTO journal_entries (entry_date, account, description, debit, credit, source_module, reference_id) VALUES (?, ?, ?, ?, ?, 'Disbursements', ?)";
+            $journal_stmt = $conn->prepare($sql_journal);
+
+            if ($journal_stmt) {
+                // 1) Debit: Expense (Disbursement Category)
+                $account1 = $data['category'] ?? 'Disbursement Expense';
+                $desc1 = "Approved disbursement for vendor " . $effectiveVendor;
+                $debit1 = $effectiveAmount;
+                $credit1 = 0.00;
+                $ref = $id;
+                if (!$journal_stmt->bind_param("sssddi", $effectiveDate, $account1, $desc1, $debit1, $credit1, $ref)) {
+                    $warnings[] = "Journal bind (debit) failed: " . $journal_stmt->error;
+                } else if (!$journal_stmt->execute()) {
+                    $warnings[] = "Journal execute (debit) failed: " . $journal_stmt->error;
+                }
+
+                // 2) Credit: Cash/Bank
+                $account2 = "Cash/Bank";
+                $desc2 = "Payment released for disbursement " . $effectiveVendor;
+                $debit2 = 0.00;
+                $credit2 = $effectiveAmount;
+                if (!$journal_stmt->bind_param("sssddi", $effectiveDate, $account2, $desc2, $debit2, $credit2, $ref)) {
+                    $warnings[] = "Journal bind (credit) failed: " . $journal_stmt->error;
+                } else if (!$journal_stmt->execute()) {
+                    $warnings[] = "Journal execute (credit) failed: " . $journal_stmt->error;
+                }
+            } else {
+                $warnings[] = "Journal prepare failed: " . $conn->error;
+            }
+        } catch (Throwable $t) {
+            $warnings[] = "Journal exception: " . $t->getMessage();
+        }
+    }
+
+    echo json_encode([
+        "success" => true,
+        "stage" => "done",
+        "message" => "Disbursement updated successfully",
+        "id" => $id,
+        "amount" => $effectiveAmount,
+        "warnings" => $warnings
+    ]);
     break;
 
   case "DELETE":
