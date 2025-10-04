@@ -18,6 +18,15 @@ function logMsg($msg) {
     error_log("[" . date("Y-m-d H:i:s") . "] " . $msg . "\n", 3, __DIR__ . "/error_log.txt");
 }
 
+function getDisbursementById($conn, $id) {
+    $stmt = $conn->prepare("SELECT * FROM disbursements WHERE id = ?");
+    if (!$stmt) return null;
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    return $result->fetch_assoc() ?: null;
+}
+
 switch ($method) {
   case "OPTIONS":
     http_response_code(200);
