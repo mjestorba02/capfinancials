@@ -208,9 +208,22 @@ async function loadDisbursements() {
 async function loadVendors() {
   try {
     const res = await fetch(vendorApi);
-    const result = await res.json();
+    console.log("Fetch status:", res.status);
+
+    const text = await res.text(); // read raw response
+    console.log("Raw response:", text);
+
+    let result;
+    try {
+      result = JSON.parse(text);
+    } catch (e) {
+      console.error("JSON parse error:", e);
+      showToast("Invalid response from server.", "error");
+      return;
+    }
 
     if (!result.success) {
+      console.error("API Error:", result.error);
       showToast("Failed to load vendors: " + (result.error || "Unknown error"), "error");
       return;
     }
@@ -219,10 +232,7 @@ async function loadVendors() {
     const vendorSelect = document.getElementById("vendorInput");
     const amountInput = document.getElementById("amountInput");
 
-    // Reset dropdown
     vendorSelect.innerHTML = `<option value="">Select vendor</option>`;
-
-    // Populate vendor options
     vendors.forEach(v => {
       vendorSelect.innerHTML += `
         <option value="${v.vendor}" data-amount="${v.amount}">
