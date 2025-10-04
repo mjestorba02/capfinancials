@@ -24,7 +24,7 @@ switch ($method) {
         if (isset($_GET['available']) && $_GET['available'] == 'true') {
             $query = "
                 SELECT * FROM budget_requests
-                WHERE department NOT IN (SELECT department FROM allocations)
+                WHERE department NOT IN (SELECT department FROM allocation)
                 AND status != 'Approved'
                 ORDER BY created_at DESC
             ";
