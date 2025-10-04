@@ -124,45 +124,67 @@ switch ($method) {
 
   case "PUT":
     try {
-      $data = json_decode(file_get_contents("php://input"), true);
-      if (!$data || !isset($data['id'])) throw new Exception("Missing ID or invalid JSON");
+        $data = json_decode(file_get_contents("php://input"), true);
+        if (!$data || !isset($data['id'])) throw new Exception("Missing ID or invalid JSON");
 
-      $id = intval($data['id']);
-      $fields = [];
-      $params = [];
-      $types  = "";
+        $id = intval($data['id']);
+        $fields = [];
+        $params = [];
+        $types  = "";
 
-      if (isset($data['vendor'])) { $fields[] = "vendor=?"; $params[] = $data['vendor']; $types .= "s"; }
-      if (isset($data['category'])) { $fields[] = "category=?"; $params[] = $data['category']; $types .= "s"; }
-      if (isset($data['amount'])) { $fields[] = "amount=?"; $params[] = $data['amount']; $types .= "d"; }
-      if (isset($data['status'])) { $fields[] = "status=?"; $params[] = $data['status']; $types .= "s"; }
-      if (isset($data['disbursement_date'])) { $fields[] = "disbursement_date=?"; $params[] = $data['disbursement_date']; $types .= "s"; }
+        if (isset($data['vendor'])) { $fields[] = "vendor=?"; $params[] = $data['vendor']; $types .= "s"; }
+        if (isset($data['category'])) { $fields[] = "category=?"; $params[] = $data['category']; $types .= "s"; }
+        if (isset($data['amount'])) { $fields[] = "amount=?"; $params[] = $data['amount']; $types .= "d"; }
+        if (isset($data['status'])) { $fields[] = "status=?"; $params[] = $data['status']; $types .= "s"; }
+        if (isset($data['disbursement_date'])) { $fields[] = "disbursement_date=?"; $params[] = $data['disbursement_date']; $types .= "s"; }
 
-      if (!empty($fields)) {
-        $sql = "UPDATE disbursements SET " . implode(", ", $fields) . " WHERE id=?";
-        $stmt = $conn->prepare($sql);
-        $types .= "i";
-        $params[] = $id;
-        $stmt->bind_param($types, ...$params);
+        if (!empty($fields)) {
+            $sql = "UPDATE disbursements SET " . implode(", ", $fields) . " WHERE id=?";
+            $stmt = $conn->prepare($sql);
+            $types .= "i";
+            $params[] = $id;
+            $stmt->bind_param($types, ...$params);
 
-        if ($stmt->execute()) {
-          if ($stmt->affected_rows > 0) {
-            echo json_encode(["success" => true]);
-          } else {
-            logMsg("PUT no change: ID $id");
-            echo json_encode(["success" => false, "error" => "No changes made"]);
-          }
+            if ($stmt->execute()) {
+                if ($stmt->affected_rows > 0) {
+                    // Insert into journal_entries if status is Approved or Paid
+                    if (isset($data['status']) && strtolower(trim($data['status'])) === 'approved') {
+                        $vendor = $data['vendor'] ?? 'Unknown Vendor';
+                        $amount = $data['amount'] ?? 0;
+                        $category = $data['category'] ?? 'Disbursement';
+                        $date = $data['disbursement_date'] ?? date('Y-m-d');
+
+                        $desc = "Approved disbursement for {$vendor}";
+                        $entry_sql = "INSERT INTO journal_entries (reference_type, reference_id, description, debit, credit, date) VALUES (?, ?, ?, ?, ?, ?)";
+                        $entry_stmt = $conn->prepare($entry_sql);
+                        $ref_type = 'Disbursement';
+                        $debit = $amount;
+                        $credit = 0.00;
+                        $entry_stmt->bind_param("sissds", $ref_type, $id, $desc, $debit, $credit, $date);
+
+                        if ($entry_stmt->execute()) {
+                            logMsg("Journal entry added for disbursement ID $id");
+                        } else {
+                            logMsg("Journal insert failed: " . $entry_stmt->error);
+                        }
+                    }
+
+                    echo json_encode(["success" => true]);
+                } else {
+                    logMsg("PUT no change: ID $id");
+                    echo json_encode(["success" => false, "error" => "No changes made"]);
+                }
+            } else {
+                logMsg("PUT failed: " . $stmt->error);
+                echo json_encode(["success" => false, "error" => "Update failed"]);
+            }
         } else {
-          logMsg("PUT failed: " . $stmt->error);
-          echo json_encode(["success" => false, "error" => "Update failed"]);
+            logMsg("PUT invalid fields for ID $id");
+            echo json_encode(["success" => false, "error" => "No valid fields to update"]);
         }
-      } else {
-        logMsg("PUT invalid fields for ID $id");
-        echo json_encode(["success" => false, "error" => "No valid fields to update"]);
-      }
     } catch (Exception $e) {
-      logMsg("PUT error: " . $e->getMessage());
-      echo json_encode(["success" => false, "error" => "Server error"]);
+        logMsg("PUT error: " . $e->getMessage());
+        echo json_encode(["success" => false, "error" => "Server error"]);
     }
     break;
 
