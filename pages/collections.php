@@ -107,16 +107,7 @@ $children = '
 <div id="approveModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
   <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
     <h2 class="text-xl font-bold mb-4">Confirm Approval</h2>
-    <p class="text-sm text-slate-600">
-      Are you sure you want to mark collection
-      <span id="approveInvoice" class="font-medium"></span> as
-      <span class="font-semibold">Paid</span>?
-    </p>
-
-    <!-- Debug message area -->
-    <div id="approveDebug"
-         class="mt-4 bg-slate-100 text-xs font-mono text-slate-700 p-2 rounded hidden whitespace-pre-wrap"></div>
-
+    <p class="text-sm text-slate-600">Are you sure you want to mark collection <span id="approveInvoice" class="font-medium"></span> as <span class="font-semibold">Paid</span>?</p>
     <div class="flex justify-end gap-3 mt-6">
       <button type="button" onclick="closeApproveModal()" class="px-4 py-2 bg-gray-200 rounded">Cancel</button>
       <button id="confirmApproveBtn" type="button" onclick="approveCollectionFromModal()" class="px-4 py-2 bg-green-600 text-white rounded">Confirm</button>
@@ -154,7 +145,7 @@ async function loadCollections() {
         <td class="px-4 py-3">${item.date}</td>
         <td class="px-4 py-3 text-right">
           <div class="inline-flex items-center gap-2">
-            <button onclick="openViewModal('${item.invoice_no}', '${item.customer}', '${item.department}', ${item.amount}, '${item.status}', '${item.date}')" class="text-indigo-600 hover:text-indigo-800" title="View"><i class="bx bx-show text-xl"></i></button>
+            <button onclick="openViewModal('${item.invoice_no}', '${item.customer}', '${item.department}', ${item.amount}, '${item.status}', '${item.date}', '${item.id}')" class="text-indigo-600 hover:text-indigo-800" title="View"><i class="bx bx-show text-xl"></i></button>
             ${item.status === 'Pending' ? `<button onclick="showApproveModal('${item.invoice_no}')" class="text-green-600 hover:text-green-800" title="Approve"><i class="bx bx-check text-xl"></i></button>` : ''}
           </div>
         </td>
@@ -214,10 +205,8 @@ async function approveCollectionFromModal() {
   const invoice_no = _pendingApproveInvoice;
   if (!invoice_no) return;
 
-  const debugBox = document.getElementById('approveDebug');
+  // disable confirm button while request runs
   const btn = document.getElementById('confirmApproveBtn');
-  debugBox.classList.remove('hidden');
-  debugBox.textContent = "🔄 Sending request to server...\n";
   btn.disabled = true;
 
   try {
@@ -227,36 +216,16 @@ async function approveCollectionFromModal() {
       body: JSON.stringify({ invoice_no, status: 'Paid' })
     });
 
-    const rawText = await res.text();
-    debugBox.textContent += "\n📩 Raw Response:\n" + rawText;
-
-    if (!rawText) {
-      debugBox.textContent += "\n⚠️ Empty response from server.";
-      throw new Error("Empty response");
-    }
-
-    let result;
-    try {
-      result = JSON.parse(rawText);
-    } catch (jsonErr) {
-      debugBox.textContent += "\n❌ JSON parse failed: " + jsonErr.message;
-      throw jsonErr;
-    }
-
-    debugBox.textContent += "\n✅ Parsed Result:\n" + JSON.stringify(result, null, 2);
-
+    const result = await res.json();
     if (result && result.success) {
       showToast('Collection ' + invoice_no + ' marked as Paid.', 'success');
       closeApproveModal();
       loadCollections();
     } else {
-      const errMsg = result?.error || "Failed to approve collection.";
-      debugBox.textContent += "\n❌ Server error: " + errMsg;
-      showToast(errMsg, 'error');
+      showToast('Failed to approve collection.', 'error');
     }
   } catch (err) {
-    console.error("Approval error:", err);
-    debugBox.textContent += "\n💥 Network/JS error:\n" + err.message;
+    console.error(err);
     showToast('Error: Unable to reach server.', 'error');
   } finally {
     btn.disabled = false;
