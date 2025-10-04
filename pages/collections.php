@@ -210,29 +210,19 @@ async function approveCollectionFromModal() {
   btn.disabled = true;
 
   try {
-  const res = await fetch(apiUrl, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ invoice_no, status: 'Paid' })
-  });
+    const res = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ invoice_no, status: 'Paid' })
+    });
 
-  const text = await res.text(); // instead of res.json()
-  console.log("Raw response:", text); // 👀 check what PHP sent
-
-  let result;
-  try {
-      result = JSON.parse(text);
-    } catch {
-      showToast('Server returned invalid JSON response.', 'error');
-      return;
-    }
-
-    if (result.success) {
+    const result = await res.json();
+    if (result && result.success) {
       showToast('Collection ' + invoice_no + ' marked as Paid.', 'success');
       closeApproveModal();
       loadCollections();
     } else {
-      showToast(result.error || 'Failed to approve collection.', 'error');
+      showToast('Failed to approve collection.', 'error');
     }
   } catch (err) {
     console.error(err);
