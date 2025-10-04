@@ -293,15 +293,25 @@ document.getElementById("calculateUsedForm").addEventListener("submit", async fu
 });
 
 async function loadDepartments() {
-  const res = await fetch(`${budgetApi}?available=true`);
+  const res = await fetch(budgetApi);
   const data = await res.json();
   const select = document.getElementById("departmentSelect");
-  select.innerHTML = `<option value="">Select Department</option>`;
-  data.forEach(d => {
-    select.innerHTML += `<option value="${d.department}" data-amount="${d.amount}">
-      ${d.department} - ₱${parseFloat(d.amount).toLocaleString()}
-    </option>`;
-  });
+  select.innerHTML = "<option value=\"\">Select Department</option>";
+
+  // Get existing allocations to exclude them
+  const allocationsRes = await fetch(allocationApi);
+  const allocations = await allocationsRes.json();
+  const allocatedIds = allocations.map(a => parseInt(a.request_id));
+
+  // Show only unallocated budget requests
+  data
+    .filter(d => !allocatedIds.includes(parseInt(d.id)))
+    .forEach(d => {
+      select.innerHTML += `
+        <option value="${d.id}" data-department="${d.department}" data-amount="${d.amount}">
+          ${d.department} - ₱${parseFloat(d.amount).toLocaleString()}
+        </option>`;
+    });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -311,23 +321,35 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-document.getElementById("allocationForm").addEventListener("submit", async function(e){
+document.getElementById("allocationForm").addEventListener("submit", async function(e) {
   e.preventDefault();
-  const department = document.getElementById("departmentSelect").value;
+
+  // Get selected request_id (from the dropdown)
+  const request_id = document.getElementById("departmentSelect").value;
+
+  // Get department name from the selected <option>
+  const selectedOption = document.querySelector(`#departmentSelect option[value="${request_id}"]`);
+  const department = selectedOption ? selectedOption.dataset.department : "";
+
   const project = document.getElementById("project").value;
   const allocated = document.getElementById("allocated").value;
 
+  // Send data to backend
   const res = await fetch(allocationApi, {
     method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ department, project, allocated })
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ request_id, department, project, allocated })
   });
+
   const result = await res.json();
-  if(result.success){
+
+  if (result.success) {
     closeAddAllocationModal();
     loadAllocations();
     alert("Allocation added successfully!");
-  } else alert("Error: "+result.error);
+  } else {
+    alert("Error: " + result.error);
+  }
 });
 
 function openAddAllocationModal() {
