@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 include "db.php"; // make sure this path is correct
 
 // ---------- QUERY ----------
-$sql = "SELECT vendor, amount FROM account_payable";
+$sql = "SELECT vendor, amount FROM payments";
 $result = $conn->query($sql);
 
 // ---------- ERROR HANDLING ----------
