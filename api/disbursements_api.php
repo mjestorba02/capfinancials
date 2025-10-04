@@ -19,6 +19,10 @@ function logMsg($msg) {
 }
 
 switch ($method) {
+  case "OPTIONS":
+    http_response_code(200);
+    echo json_encode(["success" => true]);
+    break;
   case "GET":
     try {
       if (isset($_GET['id'])) {
@@ -39,25 +43,69 @@ switch ($method) {
 
   case "POST":
     try {
-      $data = json_decode(file_get_contents("php://input"), true);
-      if (!$data) throw new Exception("Invalid JSON input");
+      $raw = file_get_contents("php://input");
+      $data = json_decode($raw, true);
 
+      if (json_last_error() !== JSON_ERROR_NONE) {
+        // Fallback: allow x-www-form-urlencoded payloads
+        $alt = [];
+        parse_str($raw, $alt);
+        if (!empty($alt)) {
+          $data = $alt;
+        }
+      }
+
+      if (!is_array($data)) {
+        logMsg("POST invalid input. Raw body: " . $raw);
+        echo json_encode(["success" => false, "error" => "Invalid JSON input"]);
+        break;
+      }
+
+      // Basic validation
+      $required = ["vendor", "category", "amount", "status", "disbursement_date"];
+      foreach ($required as $field) {
+        if (!isset($data[$field]) || $data[$field] === "") {
+          echo json_encode(["success" => false, "error" => "Missing field: $field"]);
+          break 2;
+        }
+      }
+
+      $vendor = trim($data['vendor']);
+      $category = trim($data['category']);
+      $status = trim($data['status']);
+      $amount = (float)$data['amount'];
+      $date = trim($data['disbursement_date']);
+
+      // Generate voucher number based on count
       $res = $conn->query("SELECT COUNT(*) as count FROM disbursements");
-      $count = $res->fetch_assoc()['count'] + 1;
+      if ($res === false) {
+        logMsg("POST count query failed: " . $conn->error);
+        echo json_encode(["success" => false, "error" => "Failed to generate voucher number"]);
+        break;
+      }
+      $row = $res->fetch_assoc();
+      $count = (int)$row['count'] + 1;
       $voucher_no = "VCH-" . str_pad($count, 3, "0", STR_PAD_LEFT);
 
       $stmt = $conn->prepare("INSERT INTO disbursements (voucher_no, vendor, category, amount, status, disbursement_date) VALUES (?, ?, ?, ?, ?, ?)");
-      $stmt->bind_param("sssiss", $voucher_no, $data['vendor'], $data['category'], $data['amount'], $data['status'], $data['disbursement_date']);
+      if (!$stmt) {
+        logMsg("POST prepare failed: " . $conn->error);
+        echo json_encode(["success" => false, "error" => "Insert prepare failed"]);
+        break;
+      }
+
+      // Use correct types: sssdss (amount as double)
+      $stmt->bind_param("sssdss", $voucher_no, $vendor, $category, $amount, $status, $date);
 
       if ($stmt->execute()) {
         echo json_encode(["success" => true, "voucher_no" => $voucher_no]);
       } else {
-        logMsg("POST failed: " . $stmt->error);
-        echo json_encode(["success" => false, "error" => "Insert failed"]);
+        logMsg("POST execute failed: " . $stmt->error);
+        echo json_encode(["success" => false, "error" => "Insert failed: " . $stmt->error]);
       }
     } catch (Exception $e) {
-      logMsg("POST error: " . $e->getMessage());
-      echo json_encode(["success" => false, "error" => "Server error"]);
+      logMsg("POST exception: " . $e->getMessage());
+      echo json_encode(["success" => false, "error" => $e->getMessage()]);
     }
     break;
 
