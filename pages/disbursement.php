@@ -85,7 +85,13 @@ $children = '
       </div>
       <div>
         <label class="block text-sm font-medium text-slate-600">Amount</label>
-        <input id="amountInput" type="number" class="w-full border rounded-lg px-3 py-2 mt-1" placeholder="Enter amount">
+        <input 
+          id="amountInput" 
+          type="text" 
+          class="w-full border rounded-lg px-3 py-2 mt-1 bg-gray-100 text-gray-700 cursor-not-allowed" 
+          placeholder="Auto-filled from vendor" 
+          readonly
+        >
       </div>
       <div>
         <label class="block text-sm font-medium text-slate-600">Status</label>
