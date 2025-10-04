@@ -20,17 +20,14 @@ $children = '
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-semibold">Journal Entries List</h3>
         <div class="flex gap-2 items-center mb-4">
-          <select id="filterType" class="border px-2 py-1">
-            <option value="all">All Types</option>
-            <option value="debit">Debit</option>
-            <option value="credit">Credit</option>
-          </select>
-
           <input type="text" id="filterAccount" placeholder="Filter by Account" class="border px-2 py-1">
+          
+          <label for="filterFrom">From:</label>
+          <input type="date" id="filterFrom" class="border px-2 py-1">
 
-          <input type="date" id="filterDate" class="border px-2 py-1">
+          <label for="filterTo">To:</label>
+          <input type="date" id="filterTo" class="border px-2 py-1">
 
-          <!-- Reset Button -->
           <button id="resetFilters" class="bg-red-500 text-white px-3 py-1 rounded">
             Reset Filters
           </button>
@@ -220,33 +217,35 @@ function closeAddJournalModal() {
 
 // ===================== FILTER =====================
 function filterJournal() {
-  const type = document.getElementById("filterType").value.toLowerCase();
   const account = document.getElementById("filterAccount").value.toLowerCase();
-  const date = document.getElementById("filterDate").value;
-
+  const fromDate = document.getElementById("filterFrom").value;
+  const toDate = document.getElementById("filterTo").value;
   const rows = document.querySelectorAll("#journalTable tbody tr");
+
   rows.forEach(row => {
-    const rowType = row.cells[2].innerText.toLowerCase();
     const rowAccount = row.cells[1].innerText.toLowerCase();
-    const rowDate = row.cells[5].innerText;
+    const rowDateStr = row.cells[5].innerText.trim();
+    const rowDate = new Date(rowDateStr);
+    
+    let matchesAccount = !account || rowAccount.includes(account);
+    let matchesDate = true;
 
-    const matchesType = (type === "all" || rowType === type);
-    const matchesAccount = (!account || rowAccount.includes(account));
-    const matchesDate = (!date || rowDate === date);
+    if (fromDate && rowDate < new Date(fromDate)) matchesDate = false;
+    if (toDate && rowDate > new Date(toDate)) matchesDate = false;
 
-    row.style.display = (matchesType && matchesAccount && matchesDate) ? "" : "none";
+    row.style.display = (matchesAccount && matchesDate) ? "" : "none";
   });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("filterAccount").addEventListener("input", filterJournal);
-  document.getElementById("filterDate").addEventListener("change", filterJournal);
-  document.getElementById("filterType").addEventListener("change", filterJournal);
+  document.getElementById("filterFrom").addEventListener("change", filterJournal);
+  document.getElementById("filterTo").addEventListener("change", filterJournal);
 
   document.getElementById("resetFilters").addEventListener("click", () => {
-    document.getElementById("filterType").value = "all";
     document.getElementById("filterAccount").value = "";
-    document.getElementById("filterDate").value = "";
+    document.getElementById("filterFrom").value = "";
+    document.getElementById("filterTo").value = "";
     filterJournal();
   });
 });
