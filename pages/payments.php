@@ -286,13 +286,6 @@ document.getElementById("paymentForm").addEventListener("submit", async (e) => {
     // Show all rows again
     const rows = document.querySelectorAll("#paymentsBody tr");
     rows.forEach(row => (row.style.display = ""));
-
-    // Optional: Show a toast or console log
-    if (typeof showToast === "function") {
-      showToast("Filters cleared ✅", "success");
-    } else {
-      console.log("Filters cleared");
-    }
   }
 
   // Export (CSV)
