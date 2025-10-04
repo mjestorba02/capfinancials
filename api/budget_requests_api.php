@@ -57,20 +57,22 @@ switch ($method) {
         $purpose = $conn->real_escape_string($data['purpose']);
         $amount = $conn->real_escape_string($data['amount']);
 
-        // Get the latest request_id (numerical part)
-        $result = $conn->query("SELECT request_id FROM budget_requests ORDER BY id DESC LIMIT 1");
-        if ($result && $row = $result->fetch_assoc()) {
-            // Extract number from 'REQ-###'
-            $lastNumber = (int) filter_var($row['request_id'], FILTER_SANITIZE_NUMBER_INT);
-            $nextNumber = $lastNumber + 1;
+        // Get the highest numerical part from request_id (e.g., REQ-001 → 1)
+        $result = $conn->query("SELECT MAX(CAST(SUBSTRING(request_id, 5) AS UNSIGNED)) AS last_number FROM budget_requests");
+
+        if ($result && $row = $result->fetch_assoc() && $row['last_number'] !== null) {
+            $nextNumber = (int)$row['last_number'] + 1;
         } else {
             $nextNumber = 1; // start from REQ-001 if none exist
         }
 
+        // Format request_id (e.g., REQ-002)
         $request_id = "REQ-" . str_pad($nextNumber, 3, "0", STR_PAD_LEFT);
 
+        // Insert new record
         $sql = "INSERT INTO budget_requests (request_id, department, purpose, amount)
                 VALUES ('$request_id', '$department', '$purpose', '$amount')";
+
         error_log("[budget_requests_api.php DEBUG] Executing SQL: " . $sql);
 
         if ($conn->query($sql)) {
