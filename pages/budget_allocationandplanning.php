@@ -298,9 +298,12 @@ async function loadDepartments() {
   const data = await res.json();
   const select = document.getElementById("departmentSelect");
   select.innerHTML = "<option value=\"\">Select Department</option>";
-  data.forEach(d => {
-    select.innerHTML += `<option value="${d.department}" data-amount="${d.amount}">${d.department} - ₱${parseFloat(d.amount).toLocaleString()}</option>`;
-  });
+  // Only include requests that are not Approved
+  data.filter(d => (d.status || '').toString().trim().toLowerCase() !== 'approved')
+    .forEach(d => {
+      // store the numeric id as the option value and include department/purpose/amount as data attributes
+      select.innerHTML += `<option value="${d.id}" data-department="${encodeURIComponent(d.department)}" data-purpose="${encodeURIComponent(d.purpose || '')}" data-amount="${d.amount}">${d.department} - ₱${parseFloat(d.amount).toLocaleString()}</option>`;
+    });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -312,7 +315,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 document.getElementById("allocationForm").addEventListener("submit", async function(e){
   e.preventDefault();
-  const department = document.getElementById("departmentSelect").value;
+  // departmentSelect now stores the budget_request id as value
+  const selectedOption = document.getElementById("departmentSelect").selectedOptions[0];
+  const requestId = document.getElementById("departmentSelect").value; // numeric id from budget_requests
+  const department = selectedOption ? decodeURIComponent(selectedOption.getAttribute('data-department') || '') : '';
   const project = document.getElementById("project").value;
   const allocated = document.getElementById("allocated").value;
 
@@ -323,6 +329,19 @@ document.getElementById("allocationForm").addEventListener("submit", async funct
   });
   const result = await res.json();
   if(result.success){
+    // mark the budget request as Approved (if we have a request id)
+    if (requestId) {
+      try {
+        await fetch(budgetApi, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: requestId, department: department, purpose: selectedOption.getAttribute('data-purpose') ? decodeURIComponent(selectedOption.getAttribute('data-purpose')) : '', amount: selectedOption.getAttribute('data-amount'), status: 'Approved' })
+        });
+      } catch (err) {
+        console.error('Failed to mark budget request approved', err);
+      }
+    }
+
     closeAddAllocationModal();
     loadAllocations();
     alert("Allocation added successfully!");
