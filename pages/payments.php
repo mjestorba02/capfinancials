@@ -27,7 +27,16 @@ $children = '
           <option value="Pending">Pending</option>
           <option value="Completed">Completed</option>
         </select>
-        
+
+        <!-- Date range filter -->
+        <label class="text-sm text-slate-600">From:</label>
+        <input type="date" id="fromDate" class="border px-3 py-2 rounded-lg text-sm">
+        <label class="text-sm text-slate-600">To:</label>
+        <input type="date" id="toDate" class="border px-3 py-2 rounded-lg text-sm">
+
+        <button onclick="filterPayments()" class="bg-slate-600 hover:bg-slate-700 text-white text-sm px-3 py-2 rounded-lg">
+          Filter
+        </button>
       </div>
     </div>
 
@@ -154,6 +163,8 @@ $children = '
         </td>
       `;
       tbody.appendChild(row);
+
+      filterPayments();
     });
   }
 
@@ -242,9 +253,25 @@ document.getElementById("paymentForm").addEventListener("submit", async (e) => {
   // Filter
   function filterPayments() {
     const filter = document.getElementById("filterPaymentStatus").value;
+    const fromDate = document.getElementById("fromDate").value;
+    const toDate = document.getElementById("toDate").value;
     const rows = document.querySelectorAll("#paymentsBody tr");
+
     rows.forEach(row => {
-      row.style.display = filter === "all" || row.getAttribute("data-status") === filter ? "" : "none";
+      const status = row.getAttribute("data-status");
+      const dateCell = row.querySelector("td:nth-child(3)");
+      const paymentDate = dateCell ? dateCell.textContent.trim() : "";
+
+      let visible = true;
+
+      // Status filter
+      if (filter !== "all" && status !== filter) visible = false;
+
+      // Date range filter
+      if (fromDate && new Date(paymentDate) < new Date(fromDate)) visible = false;
+      if (toDate && new Date(paymentDate) > new Date(toDate)) visible = false;
+
+      row.style.display = visible ? "" : "none";
     });
   }
 
