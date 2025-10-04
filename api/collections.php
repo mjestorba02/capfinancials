@@ -89,6 +89,8 @@ switch ($method) {
         $stmt->bind_param("ssdsss", $customer, $department, $amount, $status, $date, $invoice_no);
         $updateSuccess = $stmt->execute();
 
+        console.log("test");
+
         // If status = paid, create journal entry
         if ($status === "Paid") {
             $account = "Accounts Receivable";
@@ -103,7 +105,7 @@ switch ($method) {
             $jstmt->execute();
         }
 
-        // Notifications
+        // 🔹 Notifications
         $notif_stmt = @$conn->prepare(
             "INSERT INTO notifications (module, record_id, message, link) VALUES (?, ?, ?, ?)"
         );
@@ -116,17 +118,9 @@ switch ($method) {
             @$notif_stmt->execute();
         }
 
-        // echo json_encode([
-        //     "success" => true,
-        //     "message" => $updateSuccess ? "Collection updated successfully" : "Collection update attempted"
-        // ]);
-
-        if ($stmt->execute()) {
-            echo json_encode(["success" => true, "message" => $updateSuccess ? "Collection updated successfully" : "Collection update attempted"]);
-        } else {
-            echo json_encode(["success" => false, "error" => $stmt->error]);
-        }
+        echo json_encode([
+            "success" => true,
+            "message" => $updateSuccess ? "Collection updated successfully" : "Collection update attempted"
+        ]);
         break;
-
-
 }
