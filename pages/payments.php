@@ -1,10 +1,6 @@
 <?php
 include '../layout/adminLayout.php';
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 $children = '
 <!-- Main -->
 <main class="flex-1 p-8 overflow-y-auto max-h-screen">

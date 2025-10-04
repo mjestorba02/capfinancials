@@ -1,9 +1,5 @@
 <?php
 
-ini_set("log_errors", 1);
-ini_set("error_log", __DIR__ . "/budget_error.log");
-error_log("=== Budget API hit: " . $_SERVER['REQUEST_METHOD'] . " ===");
-
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
@@ -57,7 +53,7 @@ switch ($method) {
         $purpose = $conn->real_escape_string($data['purpose']);
         $amount = $conn->real_escape_string($data['amount']);
 
-       // Get the highest numeric part from existing request_id (e.g. REQ-001 → 1)
+        // Get the highest numeric part from existing request_id (e.g. REQ-001 → 1)
         $result = $conn->query("SELECT MAX(CAST(SUBSTRING(request_id, 5) AS UNSIGNED)) AS last_number FROM budget_requests");
 
         $nextNumber = 1; // default

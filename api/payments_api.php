@@ -1,10 +1,6 @@
 <?php
 include 'db.php'; // your db connection
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
@@ -161,22 +157,37 @@ switch ($method) {
 
     // Try journal entry insert if completed
     if (isset($data['status']) && $data['status'] === "Completed") {
-        $journal_stmt = $conn->prepare("INSERT INTO journal_entries (entry_date, account, description, debit, source_module, reference_id) VALUES (NOW(), ?, ?, ?, 'Payments', ?)");
+        $sql_journal = "INSERT INTO journal_entries (entry_date, account, description, debit, source_module, reference_id) 
+                        VALUES (NOW(), ?, ?, ?, 'Payments', ?)";
+        $journal_stmt = $conn->prepare($sql_journal);
         if (!$journal_stmt) {
             echo json_encode(["success" => false, "stage" => "journal_prepare", "error" => $conn->error]);
             break;
         }
+
         $account = "Accounts Payable";
         $desc = "Payment approved for vendor " . ($data['vendor'] ?? '');
         $amt = isset($data['amount']) ? floatval($data['amount']) : 0.00;
+
         if (!$journal_stmt->bind_param("ssdi", $account, $desc, $amt, $id)) {
             echo json_encode(["success" => false, "stage" => "journal_bind", "error" => $journal_stmt->error]);
+            error_log("JOURNAL BIND ERROR: " . $journal_stmt->error);
             break;
         }
+
         if (!$journal_stmt->execute()) {
-            echo json_encode(["success" => false, "stage" => "journal_execute", "error" => $journal_stmt->error]);
+            echo json_encode([
+                "success" => false,
+                "stage" => "journal_execute",
+                "error" => $journal_stmt->error,
+                "sql" => $sql_journal,
+                "values" => compact('account', 'desc', 'amt', 'id')
+            ]);
+            error_log("JOURNAL EXECUTE ERROR: " . $journal_stmt->error);
             break;
         }
+
+        error_log("DEBUG: Journal entry inserted successfully for payment ID $id");
     }
 
     echo json_encode([
