@@ -52,6 +52,8 @@ switch ($method) {
         }
         break;
     case "PUT":
+
+        console.log("test2");
         $data = json_decode(file_get_contents("php://input"), true);
 
         if (!isset($data['invoice_no'])) {
@@ -82,6 +84,8 @@ switch ($method) {
         $status     = $data['status']     ?? $db_status;
         $date       = $data['date']       ?? $db_date;
 
+        console.log("test");
+
         // Update query
         $stmt = $conn->prepare("UPDATE collections 
                                 SET customer=?, department=?, amount=?, status=?, date=? 
@@ -89,7 +93,7 @@ switch ($method) {
         $stmt->bind_param("ssdsss", $customer, $department, $amount, $status, $date, $invoice_no);
         $updateSuccess = $stmt->execute();
 
-        console.log("test");
+        console.log("test1");
 
         // If status = paid, create journal entry
         if ($status === "Paid") {
