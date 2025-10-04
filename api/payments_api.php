@@ -24,7 +24,20 @@ function generatePaymentId($conn) {
     }
 }
 
+function getPaymentById($conn, $id) {
+    $stmt = $conn->prepare("SELECT id, payment_id, vendor, payment_date, amount, status FROM payments WHERE id = ? LIMIT 1");
+    if (!$stmt) return null;
+    $stmt->bind_param("i", $id);
+    if (!$stmt->execute()) return null;
+    $res = $stmt->get_result();
+    return $res ? $res->fetch_assoc() : null;
+}
+
 switch ($method) {
+    case "OPTIONS":
+        http_response_code(200);
+        echo json_encode(["success" => true]);
+        break;
     case "GET":
         $res = $conn->query("SELECT * FROM payments ORDER BY id DESC");
         $rows = [];
@@ -51,8 +64,6 @@ switch ($method) {
         break;
 
     case "PUT":
-    header("Content-Type: application/json");
-
     $raw = file_get_contents("php://input");
     $data = json_decode($raw, true);
 
@@ -143,63 +154,75 @@ switch ($method) {
     // If we got here, update succeeded ✅
     error_log("DEBUG: Payment update OK, ID = $id");
 
-    // Try notification insert
-    $msg = "Payment #$id updated";
-    $link = "payments.php?id=" . $id;
-    $notif_stmt = $conn->prepare("INSERT INTO notifications (message, link) VALUES (?, ?)");
-    if (!$notif_stmt) {
-        echo json_encode(["success" => false, "stage" => "notif_prepare", "error" => $conn->error]);
-        break;
-    }
-    if (!$notif_stmt->bind_param("ss", $msg, $link)) {
-        echo json_encode(["success" => false, "stage" => "notif_bind", "error" => $notif_stmt->error]);
-        break;
-    }
-    if (!$notif_stmt->execute()) {
-        echo json_encode(["success" => false, "stage" => "notif_execute", "error" => $notif_stmt->error]);
-        break;
+    $warnings = [];
+
+    // Best-effort notification insert (do not fail overall)
+    try {
+        $msg = "Payment #$id updated";
+        $link = "payments.php?id=" . $id;
+        $notif_stmt = $conn->prepare("INSERT INTO notifications (message, link) VALUES (?, ?)");
+        if ($notif_stmt) {
+            $notif_stmt->bind_param("ss", $msg, $link);
+            if (!$notif_stmt->execute()) {
+                $warnings[] = "Notification insert failed: " . $notif_stmt->error;
+            }
+        } else {
+            $warnings[] = "Notification prepare failed: " . $conn->error;
+        }
+    } catch (Throwable $t) {
+        $warnings[] = "Notification exception: " . $t->getMessage();
     }
 
-    // Try journal entry insert if completed
+    // Prepare details for journal inserts
+    $current = getPaymentById($conn, $id);
+    $effectiveAmount = isset($data['amount']) ? floatval($data['amount']) : (float)($current['amount'] ?? 0);
+    $effectiveVendor = isset($data['vendor']) ? $data['vendor'] : ($current['vendor'] ?? '');
+
+    // Try journal entries if status becomes Completed (best-effort)
     if (isset($data['status']) && $data['status'] === "Completed") {
-        $sql_journal = "INSERT INTO journal_entries (entry_date, account, description, debit, source_module, reference_id) 
-                        VALUES (NOW(), ?, ?, ?, 'Payments', ?)";
-        $journal_stmt = $conn->prepare($sql_journal);
-        if (!$journal_stmt) {
-            echo json_encode(["success" => false, "stage" => "journal_prepare", "error" => $conn->error]);
-            break;
+        try {
+            // Insert two lines: Debit AP, Credit Cash
+            $sql_journal = "INSERT INTO journal_entries (entry_date, account, description, debit, credit, source_module, reference_id) VALUES (NOW(), ?, ?, ?, ?, 'Payments', ?)";
+            $journal_stmt = $conn->prepare($sql_journal);
+            if ($journal_stmt) {
+                // 1) Debit Accounts Payable
+                $account1 = "Accounts Payable";
+                $desc1 = "Payment approved for vendor " . $effectiveVendor;
+                $debit1 = $effectiveAmount;
+                $credit1 = 0.00;
+                $ref = $id;
+                if (!$journal_stmt->bind_param("ssddi", $account1, $desc1, $debit1, $credit1, $ref)) {
+                    $warnings[] = "Journal bind (debit) failed: " . $journal_stmt->error;
+                } else if (!$journal_stmt->execute()) {
+                    $warnings[] = "Journal execute (debit) failed: " . $journal_stmt->error;
+                }
+
+                // 2) Credit Cash
+                $account2 = "Cash";
+                $desc2 = "Cash disbursement for payment ID #" . ($current['payment_id'] ?? $id);
+                $debit2 = 0.00;
+                $credit2 = $effectiveAmount;
+                // Need to rebind for next execution
+                if (!$journal_stmt->bind_param("ssddi", $account2, $desc2, $debit2, $credit2, $ref)) {
+                    $warnings[] = "Journal bind (credit) failed: " . $journal_stmt->error;
+                } else if (!$journal_stmt->execute()) {
+                    $warnings[] = "Journal execute (credit) failed: " . $journal_stmt->error;
+                }
+            } else {
+                $warnings[] = "Journal prepare failed: " . $conn->error;
+            }
+        } catch (Throwable $t) {
+            $warnings[] = "Journal exception: " . $t->getMessage();
         }
-
-        $account = "Accounts Payable";
-        $desc = "Payment approved for vendor " . ($data['vendor'] ?? '');
-        $amt = isset($data['amount']) ? floatval($data['amount']) : 0.00;
-
-        if (!$journal_stmt->bind_param("ssdi", $account, $desc, $amt, $id)) {
-            echo json_encode(["success" => false, "stage" => "journal_bind", "error" => $journal_stmt->error]);
-            error_log("JOURNAL BIND ERROR: " . $journal_stmt->error);
-            break;
-        }
-
-        if (!$journal_stmt->execute()) {
-            echo json_encode([
-                "success" => false,
-                "stage" => "journal_execute",
-                "error" => $journal_stmt->error,
-                "sql" => $sql_journal,
-                "values" => compact('account', 'desc', 'amt', 'id')
-            ]);
-            error_log("JOURNAL EXECUTE ERROR: " . $journal_stmt->error);
-            break;
-        }
-
-        error_log("DEBUG: Journal entry inserted successfully for payment ID $id");
     }
 
     echo json_encode([
         "success" => true,
         "stage" => "done",
         "message" => "Payment updated successfully",
-        "id" => $id
+        "id" => $id,
+        "amount" => $effectiveAmount,
+        "warnings" => $warnings
     ]);
     break;
 
