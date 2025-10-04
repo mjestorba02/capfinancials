@@ -133,6 +133,8 @@ async function loadJournal() {
   const tbody = document.querySelector("#journalTable tbody");
   tbody.innerHTML = "";
 
+  data.sort((a, b) => new Date(b.entry_date) - new Date(a.entry_date));
+
   data.forEach(item => {
     const row = `
       <tr>
