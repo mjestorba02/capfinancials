@@ -25,22 +25,33 @@ switch ($method) {
         $project = $conn->real_escape_string($data['project']);
         $allocated = $conn->real_escape_string($data['allocated']);
 
+        // 🔍 Debug log
+        error_log("[allocation_api.php DEBUG] Received POST request. request_id = " . $request_id);
+
         // Insert allocation
         $sql = "INSERT INTO allocation (request_id, department, project, allocated) 
                 VALUES ('$request_id', '$department', '$project', '$allocated')";
-        
+        error_log("[allocation_api.php DEBUG] Executing SQL: " . $sql);
+
         if ($conn->query($sql)) {
             // Mark request as approved
             $update = "UPDATE budget_requests 
                     SET status = 'Approved' 
                     WHERE id = $request_id";
-            $conn->query($update);
+            error_log("[allocation_api.php DEBUG] Executing Update SQL: " . $update);
+
+            if ($conn->query($update)) {
+                error_log("[allocation_api.php DEBUG] budget_requests updated successfully for request_id = " . $request_id);
+            } else {
+                error_log("[allocation_api.php ERROR] Failed to update budget_requests: " . $conn->error);
+            }
 
             echo json_encode([
                 "success" => true,
                 "message" => "Allocation added successfully and request approved."
             ]);
         } else {
+            error_log("[allocation_api.php ERROR] Failed to insert allocation: " . $conn->error);
             echo json_encode([
                 "success" => false,
                 "error" => $conn->error

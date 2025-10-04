@@ -321,34 +321,57 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+// Handle allocation form submission
 document.getElementById("allocationForm").addEventListener("submit", async function(e) {
   e.preventDefault();
 
-  // Get selected request_id (from the dropdown)
   const request_id = document.getElementById("departmentSelect").value;
 
-  // Get department name from the selected <option>
+  // Ensure something was selected
+  if (!request_id) {
+    alert("Please select a department/category first.");
+    return;
+  }
+
   const selectedOption = document.querySelector(`#departmentSelect option[value="${request_id}"]`);
   const department = selectedOption ? selectedOption.dataset.department : "";
+  const project = document.getElementById("project").value.trim();
+  const allocated = document.getElementById("allocated").value.trim();
 
-  const project = document.getElementById("project").value;
-  const allocated = document.getElementById("allocated").value;
+  if (!project || !allocated) {
+    alert("Please fill out all fields before saving.");
+    return;
+  }
 
-  // Send data to backend
-  const res = await fetch(allocationApi, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ request_id, department, project, allocated })
-  });
+  console.log("[DEBUG] Sending data:", { request_id, department, project, allocated });
 
-  const result = await res.json();
+  try {
+    const res = await fetch(allocationApi, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ request_id, department, project, allocated })
+    });
 
-  if (result.success) {
-    closeAddAllocationModal();
-    loadAllocations();
-    alert("Allocation added successfully!");
-  } else {
-    alert("Error: " + result.error);
+    const result = await res.json();
+    console.log("[DEBUG] API response:", result);
+
+    if (result.success) {
+      // Close modal and reload both tables
+      closeAddAllocationModal();
+      await loadAllocations();
+      await loadRequests(); // refresh to reflect Approved status
+      Toastify({
+        text: "✅ Allocation added successfully!",
+        style: { background: "#16a34a" },
+        duration: 3000,
+        close: true
+      }).showToast();
+    } else {
+      alert("Error: " + (result.error || "Unknown error"));
+    }
+  } catch (error) {
+    console.error("[ERROR] Allocation submission failed:", error);
+    alert("An unexpected error occurred. Check console for details.");
   }
 });
 
