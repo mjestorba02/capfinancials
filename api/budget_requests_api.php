@@ -4,7 +4,6 @@ ini_set("log_errors", 1);
 ini_set("error_log", __DIR__ . "/budget_error.log");
 error_log("=== Budget API hit: " . $_SERVER['REQUEST_METHOD'] . " ===");
 
-
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
@@ -44,8 +43,17 @@ switch ($method) {
         $purpose = $conn->real_escape_string($data['purpose']);
         $amount = $conn->real_escape_string($data['amount']);
 
-        $count = $conn->query("SELECT COUNT(*) as count FROM budget_requests")->fetch_assoc()['count'] + 1;
-        $request_id = "REQ-" . str_pad($count, 3, "0", STR_PAD_LEFT);
+        // Get the latest request_id (numerical part)
+        $result = $conn->query("SELECT request_id FROM budget_requests ORDER BY id DESC LIMIT 1");
+        if ($result && $row = $result->fetch_assoc()) {
+            // Extract number from 'REQ-###'
+            $lastNumber = (int) filter_var($row['request_id'], FILTER_SANITIZE_NUMBER_INT);
+            $nextNumber = $lastNumber + 1;
+        } else {
+            $nextNumber = 1; // start from REQ-001 if none exist
+        }
+
+        $request_id = "REQ-" . str_pad($nextNumber, 3, "0", STR_PAD_LEFT);
 
         $sql = "INSERT INTO budget_requests (request_id, department, purpose, amount)
                 VALUES ('$request_id', '$department', '$purpose', '$amount')";
