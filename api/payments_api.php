@@ -140,36 +140,35 @@ switch ($method) {
             $msg = "Payment #$id updated";
             $link = "payments.php?id=" . $id;
             $notif_stmt = $conn->prepare("INSERT INTO notifications (message, link) VALUES (?, ?)");
-            if ($notif_stmt) {
-                $notif_stmt->bind_param("ss", $msg, $link);
-                $notif_stmt->execute();
+            if (!$notif_stmt) {
+                echo json_encode(["success" => false, "error" => "Notif prepare failed", "sql_error" => $conn->error]);
+                break;
+            }
+            if (!$notif_stmt->execute()) {
+                echo json_encode(["success" => false, "error" => "Notif execute failed", "stmt_error" => $notif_stmt->error]);
+                break;
             }
 
-            // Insert into journal if approved
+            // Journal entry
             if (isset($data['status']) && $data['status'] === "Completed") {
                 $journal_stmt = $conn->prepare("INSERT INTO journal_entries (entry_date, account, description, debit, source_module, reference_id) VALUES (NOW(), ?, ?, ?, 'Payments', ?)");
-                if ($journal_stmt) {
-                    $account = "Accounts Payable";
-                    $desc = "Payment approved for vendor " . ($data['vendor'] ?? '');
-                    $amt = isset($data['amount']) ? floatval($data['amount']) : 0.00;
-                    $journal_stmt->bind_param("ssdi", $account, $desc, $amt, $id);
-                    $journal_stmt->execute();
+                if (!$journal_stmt) {
+                    echo json_encode(["success" => false, "error" => "Journal prepare failed", "sql_error" => $conn->error]);
+                    break;
+                }
+                $account = "Accounts Payable";
+                $desc = "Payment approved for vendor " . ($data['vendor'] ?? '');
+                $amt = isset($data['amount']) ? floatval($data['amount']) : 0.00;
+                $journal_stmt->bind_param("ssdi", $account, $desc, $amt, $id);
+                if (!$journal_stmt->execute()) {
+                    echo json_encode(["success" => false, "error" => "Journal execute failed", "stmt_error" => $journal_stmt->error]);
+                    break;
                 }
             }
 
-            echo json_encode([
-                "success" => true,
-                "message" => "Payment updated successfully",
-                // return the amount so frontend can display it
-                "amount" => isset($data['amount']) ? floatval($data['amount']) : null,
-                "id" => $id
-            ]);
+            echo json_encode(["success" => true, "message" => "Payment updated successfully"]);
         } else {
-            echo json_encode([
-                "success" => false,
-                "message" => "Failed to update payment",
-                "error" => $stmt->error
-            ]);
+            echo json_encode(["success" => false, "error" => $stmt->error]);
         }
         break;
 
