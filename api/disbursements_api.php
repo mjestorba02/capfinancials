@@ -258,33 +258,18 @@ switch ($method) {
             if (!$journal_stmt) {
                 $warnings[] = "Journal prepare failed: " . $conn->error;
             } else {
-                // Debit
-                $account1 = "Accounts Payable";
-                $desc1 = "Disbursement recorded for vendor " . $effectiveVendor;
-                $debit1 = $effectiveAmount;
-                $credit1 = 0.00;
-                $ref = $id;
-
-                if (!$journal_stmt->bind_param("ssddi", $account1, $desc1, $debit1, $credit1, $ref)) {
-                    $warnings[] = "Journal bind (debit) failed: " . $journal_stmt->error;
-                } elseif (!$journal_stmt->execute()) {
-                    $warnings[] = "Journal execute (debit) failed: " . $journal_stmt->error;
-                } else {
-                    error_log("✅ Journal Debit inserted for Disbursement ID $id, Amount: $debit1");
-                }
-
                 // Credit
-                $account2 = "Cash";
+                $account2 = "Disbursement";
                 $desc2 = "Disbursement paid to vendor " . $effectiveVendor;
-                $debit2 = 0.00;
-                $credit2 = $effectiveAmount;
+                $debit2 = $effectiveAmount;
+                $credit2 = 0.00;
 
                 if (!$journal_stmt->bind_param("ssddi", $account2, $desc2, $debit2, $credit2, $ref)) {
                     $warnings[] = "Journal bind (credit) failed: " . $journal_stmt->error;
                 } elseif (!$journal_stmt->execute()) {
                     $warnings[] = "Journal execute (credit) failed: " . $journal_stmt->error;
                 } else {
-                    error_log("✅ Journal Credit inserted for Disbursement ID $id, Amount: $credit2");
+                    error_log("Journal Credit inserted for Disbursement ID $id, Amount: $credit2");
                 }
             }
         } catch (Throwable $t) {
