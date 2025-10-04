@@ -293,25 +293,55 @@ document.getElementById("calculateUsedForm").addEventListener("submit", async fu
 });
 
 async function loadDepartments() {
-  const res = await fetch(budgetApi);
-  const data = await res.json();
   const select = document.getElementById("departmentSelect");
-  select.innerHTML = "<option value=\"\">Select Department</option>";
+  select.innerHTML = "<option value=''>Select Department</option>";
 
-  // Get existing allocations to exclude them
-  const allocationsRes = await fetch(allocationApi);
-  const allocations = await allocationsRes.json();
-  const allocatedIds = allocations.map(a => parseInt(a.request_id));
+  try {
+    // Fetch all budget requests
+    const res = await fetch(budgetApi);
+    const data = await res.json();
+    console.log("[DEBUG] Loaded budget requests:", data);
 
-  // Show only unallocated budget requests
-  data
-    .filter(d => !allocatedIds.includes(parseInt(d.id)))
-    .forEach(d => {
+    // Fetch existing allocations
+    const allocationsRes = await fetch(allocationApi);
+    const allocations = await allocationsRes.json();
+    console.log("[DEBUG] Loaded allocations:", allocations);
+
+    // Get allocated request IDs
+    const allocatedIds = Array.isArray(allocations)
+      ? allocations.map(a => parseInt(a.request_id))
+      : [];
+
+    // Filter: only show unallocated requests with valid data
+    const unallocated = Array.isArray(data)
+      ? data.filter(d =>
+          d && d.id && !allocatedIds.includes(parseInt(d.id))
+        )
+      : [];
+
+    if (unallocated.length === 0) {
+      select.innerHTML += `<option disabled>No unallocated departments available</option>`;
+      console.warn("[DEBUG] No available unallocated departments found.");
+      return;
+    }
+
+    // Populate dropdown
+    unallocated.forEach(d => {
+      const dept = d.department || "Unnamed Department";
+      const amount = parseFloat(d.amount || 0).toLocaleString();
       select.innerHTML += `
-        <option value="${d.id}" data-department="${d.department}" data-amount="${d.amount}">
-          ${d.department} - ₱${parseFloat(d.amount).toLocaleString()}
+        <option 
+          value="${d.id}" 
+          data-department="${dept}" 
+          data-amount="${d.amount}">
+          ${dept} - ₱${amount}
         </option>`;
     });
+
+  } catch (err) {
+    console.error("[ERROR] Failed to load departments:", err);
+    select.innerHTML = "<option disabled>Error loading departments</option>";
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
