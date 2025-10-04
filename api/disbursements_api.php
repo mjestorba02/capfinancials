@@ -4,185 +4,129 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 
-include "db.php"; // adjust to your db connection
+include "db.php";
+
+// 🔹 Log errors to a custom file
+ini_set("log_errors", 1);
+ini_set("error_log", __DIR__ . "/error_log.txt"); // log file in same directory
+error_reporting(E_ALL);
+
 $method = $_SERVER['REQUEST_METHOD'];
 
-// Allow OPTIONS preflight for CORS
-if ($method === "OPTIONS") {
-  http_response_code(200);
-  exit();
+// Simple function to log custom messages
+function logMsg($msg) {
+    error_log("[" . date("Y-m-d H:i:s") . "] " . $msg . "\n", 3, __DIR__ . "/error_log.txt");
 }
 
 switch ($method) {
-  // ================= GET =================
   case "GET":
-    if (isset($_GET['id'])) {
-      $stmt = $conn->prepare("SELECT * FROM disbursements WHERE id=?");
-      $stmt->bind_param("i", $_GET['id']);
-      $stmt->execute();
-      $result = $stmt->get_result()->fetch_assoc();
-      echo json_encode($result ?: ["error" => "Not found"]);
-    } else {
-      $result = $conn->query("SELECT * FROM disbursements ORDER BY id DESC");
-      echo json_encode($result->fetch_all(MYSQLI_ASSOC));
-    }
-    break;
-
-  // ================= POST =================
-  case "POST":
-    $data = json_decode(file_get_contents("php://input"), true);
-
-    if (!$data) {
-      echo json_encode(["success" => false, "error" => "Invalid JSON input"]);
-      exit;
-    }
-
-    // Validate required fields
-    $required = ["vendor", "category", "amount", "status", "disbursement_date"];
-    foreach ($required as $field) {
-      if (empty($data[$field])) {
-        echo json_encode(["success" => false, "error" => "Missing field: $field"]);
-        exit;
-      }
-    }
-
-    // Auto-generate voucher number
-    $res = $conn->query("SELECT COUNT(*) AS count FROM disbursements");
-    $count = ($res && $res->num_rows) ? $res->fetch_assoc()['count'] + 1 : 1;
-    $voucher_no = "VCH-" . str_pad($count, 3, "0", STR_PAD_LEFT);
-
-    $stmt = $conn->prepare("
-      INSERT INTO disbursements (voucher_no, vendor, category, amount, status, disbursement_date)
-      VALUES (?, ?, ?, ?, ?, ?)
-    ");
-    $stmt->bind_param(
-      "sssiss",
-      $voucher_no,
-      $data['vendor'],
-      $data['category'],
-      $data['amount'],
-      $data['status'],
-      $data['disbursement_date']
-    );
-
-    if ($stmt->execute()) {
-      echo json_encode([
-        "success" => true,
-        "message" => "Disbursement added successfully",
-        "voucher_no" => $voucher_no
-      ]);
-    } else {
-      echo json_encode(["success" => false, "error" => $stmt->error]);
-    }
-    break;
-
-  // ================= PUT =================
-  case "PUT":
-    $data = json_decode(file_get_contents("php://input"), true);
-    if (!$data || empty($data['id'])) {
-      echo json_encode(["success" => false, "error" => "Invalid input or missing ID"]);
-      exit;
-    }
-
-    $id = intval($data['id']);
-    $fields = [];
-    $params = [];
-    $types = "";
-
-    // Build dynamic update fields
-    $map = [
-      "vendor" => "s",
-      "category" => "s",
-      "amount" => "d",
-      "status" => "s",
-      "disbursement_date" => "s"
-    ];
-
-    foreach ($map as $key => $type) {
-      if (isset($data[$key])) {
-        $fields[] = "$key=?";
-        $params[] = $data[$key];
-        $types .= $type;
-      }
-    }
-
-    if (empty($fields)) {
-      echo json_encode(["success" => false, "error" => "No fields to update"]);
-      exit;
-    }
-
-    $sql = "UPDATE disbursements SET " . implode(", ", $fields) . " WHERE id=?";
-    $stmt = $conn->prepare($sql);
-    $types .= "i";
-    $params[] = $id;
-    $stmt->bind_param($types, ...$params);
-
-    if ($stmt->execute()) {
-      if ($stmt->affected_rows > 0) {
-        $status = $data['status'] ?? null;
-
-        // Insert notification
-        $msg = "Disbursement #$id updated";
-        if ($status) $msg .= " (Status: $status)";
-        $link = "disbursements.php?id=" . $id;
-
-        $notif_sql = $conn->prepare("
-          INSERT INTO notifications (module, record_id, message, link)
-          VALUES ('disbursements', ?, ?, ?)
-        ");
-        $notif_sql->bind_param("iss", $id, $msg, $link);
-        $notif_sql->execute();
-
-        // If released, add journal entry
-        if ($status === "Released") {
-          $res = $conn->query("SELECT vendor, amount FROM disbursements WHERE id=$id");
-          if ($res && $res->num_rows > 0) {
-            $row = $res->fetch_assoc();
-            $entry_date = date("Y-m-d");
-            $account = "Cash";
-            $description = "Disbursement #$id released to " . ($row['vendor'] ?? "Vendor");
-            $amount = floatval($row['amount']);
-            $module = "disbursements";
-            $ref_id = $id;
-
-            $jstmt = $conn->prepare("
-              INSERT INTO journal_entries (entry_date, account, description, debit, source_module, reference_id)
-              VALUES (?, ?, ?, ?, ?, ?)
-            ");
-            $jstmt->bind_param("sssdis", $entry_date, $account, $description, $amount, $module, $ref_id);
-            $jstmt->execute();
-          }
-        }
-
-        echo json_encode(["success" => true, "message" => "Disbursement updated successfully"]);
+    try {
+      if (isset($_GET['id'])) {
+        $stmt = $conn->prepare("SELECT * FROM disbursements WHERE id=?");
+        $stmt->bind_param("i", $_GET['id']);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        echo json_encode($result);
       } else {
-        echo json_encode(["success" => false, "error" => "No record updated"]);
+        $result = $conn->query("SELECT * FROM disbursements ORDER BY id DESC");
+        echo json_encode($result->fetch_all(MYSQLI_ASSOC));
       }
-    } else {
-      echo json_encode(["success" => false, "error" => $stmt->error]);
+    } catch (Exception $e) {
+      logMsg("GET error: " . $e->getMessage());
+      echo json_encode(["success" => false, "error" => "Failed to fetch disbursements"]);
     }
     break;
 
-  // ================= DELETE =================
-  case "DELETE":
-    parse_str(file_get_contents("php://input"), $data);
-    if (empty($data['id'])) {
-      echo json_encode(["success" => false, "error" => "Missing ID"]);
-      exit;
+  case "POST":
+    try {
+      $data = json_decode(file_get_contents("php://input"), true);
+      if (!$data) throw new Exception("Invalid JSON input");
+
+      $res = $conn->query("SELECT COUNT(*) as count FROM disbursements");
+      $count = $res->fetch_assoc()['count'] + 1;
+      $voucher_no = "VCH-" . str_pad($count, 3, "0", STR_PAD_LEFT);
+
+      $stmt = $conn->prepare("INSERT INTO disbursements (voucher_no, vendor, category, amount, status, disbursement_date) VALUES (?, ?, ?, ?, ?, ?)");
+      $stmt->bind_param("sssiss", $voucher_no, $data['vendor'], $data['category'], $data['amount'], $data['status'], $data['disbursement_date']);
+
+      if ($stmt->execute()) {
+        echo json_encode(["success" => true, "voucher_no" => $voucher_no]);
+      } else {
+        logMsg("POST failed: " . $stmt->error);
+        echo json_encode(["success" => false, "error" => "Insert failed"]);
+      }
+    } catch (Exception $e) {
+      logMsg("POST error: " . $e->getMessage());
+      echo json_encode(["success" => false, "error" => "Server error"]);
     }
+    break;
 
-    $stmt = $conn->prepare("DELETE FROM disbursements WHERE id=?");
-    $stmt->bind_param("i", $data['id']);
+  case "PUT":
+    try {
+      $data = json_decode(file_get_contents("php://input"), true);
+      if (!$data || !isset($data['id'])) throw new Exception("Missing ID or invalid JSON");
 
-    if ($stmt->execute()) {
-      echo json_encode(["success" => true, "message" => "Deleted successfully"]);
-    } else {
-      echo json_encode(["success" => false, "error" => $stmt->error]);
+      $id = intval($data['id']);
+      $fields = [];
+      $params = [];
+      $types  = "";
+
+      if (isset($data['vendor'])) { $fields[] = "vendor=?"; $params[] = $data['vendor']; $types .= "s"; }
+      if (isset($data['category'])) { $fields[] = "category=?"; $params[] = $data['category']; $types .= "s"; }
+      if (isset($data['amount'])) { $fields[] = "amount=?"; $params[] = $data['amount']; $types .= "d"; }
+      if (isset($data['status'])) { $fields[] = "status=?"; $params[] = $data['status']; $types .= "s"; }
+      if (isset($data['disbursement_date'])) { $fields[] = "disbursement_date=?"; $params[] = $data['disbursement_date']; $types .= "s"; }
+
+      if (!empty($fields)) {
+        $sql = "UPDATE disbursements SET " . implode(", ", $fields) . " WHERE id=?";
+        $stmt = $conn->prepare($sql);
+        $types .= "i";
+        $params[] = $id;
+        $stmt->bind_param($types, ...$params);
+
+        if ($stmt->execute()) {
+          if ($stmt->affected_rows > 0) {
+            echo json_encode(["success" => true]);
+          } else {
+            logMsg("PUT no change: ID $id");
+            echo json_encode(["success" => false, "error" => "No changes made"]);
+          }
+        } else {
+          logMsg("PUT failed: " . $stmt->error);
+          echo json_encode(["success" => false, "error" => "Update failed"]);
+        }
+      } else {
+        logMsg("PUT invalid fields for ID $id");
+        echo json_encode(["success" => false, "error" => "No valid fields to update"]);
+      }
+    } catch (Exception $e) {
+      logMsg("PUT error: " . $e->getMessage());
+      echo json_encode(["success" => false, "error" => "Server error"]);
+    }
+    break;
+
+  case "DELETE":
+    try {
+      parse_str(file_get_contents("php://input"), $data);
+      if (!isset($data['id'])) throw new Exception("Missing ID");
+
+      $stmt = $conn->prepare("DELETE FROM disbursements WHERE id=?");
+      $stmt->bind_param("i", $data['id']);
+
+      if ($stmt->execute()) {
+        echo json_encode(["success" => true]);
+      } else {
+        logMsg("DELETE failed: " . $stmt->error);
+        echo json_encode(["success" => false, "error" => "Delete failed"]);
+      }
+    } catch (Exception $e) {
+      logMsg("DELETE error: " . $e->getMessage());
+      echo json_encode(["success" => false, "error" => "Server error"]);
     }
     break;
 
   default:
-    echo json_encode(["success" => false, "error" => "Unsupported method"]);
-    break;
+    logMsg("Invalid method: $method");
+    echo json_encode(["success" => false, "error" => "Invalid request method"]);
 }
 ?>
