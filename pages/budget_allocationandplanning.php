@@ -151,8 +151,8 @@ adminLayout($children);
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
 <script>
-const budgetApi = "https://financial.health-ease-hospital.com/api/budget_requests_api.php";
-const allocationApi = "https://financial.health-ease-hospital.com/api/allocation_api.php";
+const budgetApi = "http://localhost/financial2/api/budget_requests_api.php";
+const allocationApi = "http://localhost/financial2/api/allocation_api.php";
 let currentAllocationId = null;
 
 // Store global data

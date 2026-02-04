@@ -31,9 +31,10 @@ $children = '
         <thead>
           <tr class="bg-slate-100 text-left text-slate-600 uppercase text-xs">
             <th class="px-4 py-3">Request ID</th>
-            <th class="px-4 py-3">Category</th>
+            <th class="px-4 py-3">Department</th>
             <th class="px-4 py-3">Purpose</th>
             <th class="px-4 py-3">Amount</th>
+            <th class="px-4 py-3">Amount Limit</th>
             <th class="px-4 py-3">Status</th>
             <th class="px-4 py-3">Date</th>
             <th class="px-4 py-3 text-right">Actions</th>
@@ -52,8 +53,16 @@ $children = '
     <h2 class="text-xl font-semibold mb-4">New Budget Request</h2>
     <form id="requestForm" class="space-y-4">
       <div>
-        <label class="block text-sm font-medium text-slate-600">Category</label>
-        <input type="text" id="department" class="w-full border rounded-lg px-3 py-2 mt-1" required>
+        <label class="block text-sm font-medium text-slate-600">Department</label>
+        <select id="department" class="w-full border rounded-lg px-3 py-2 mt-1" required>
+          <option value="">Select Department</option>
+          <option value="HR">HR</option>
+          <option value="IT">IT</option>
+          <option value="Finance">Finance</option>
+          <option value="Operations">Operations</option>
+          <option value="Marketing">Marketing</option>
+          <option value="Sales">Sales</option>
+        </select>
       </div>
       <div>
         <label class="block text-sm font-medium text-slate-600">Purpose</label>
@@ -62,6 +71,40 @@ $children = '
       <div>
         <label class="block text-sm font-medium text-slate-600">Amount</label>
         <input type="number" id="amount" class="w-full border rounded-lg px-3 py-2 mt-1" required>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-600">Amount Limit (Breakdown)</label>
+        <input type="number" id="amount_limit" class="w-full border rounded-lg px-3 py-2 mt-1" placeholder="Max amount allowed">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-600">Attendance Required</label>
+        <select id="attendance_required" class="w-full border rounded-lg px-3 py-2 mt-1">
+          <option value="No">No</option>
+          <option value="Yes">Yes</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-600">Item List</label>
+        <textarea id="item_list" class="w-full border rounded-lg px-3 py-2 mt-1" rows="2" placeholder="List items to be purchased"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-600">Approval Required</label>
+        <select id="approval_required" class="w-full border rounded-lg px-3 py-2 mt-1" required>
+          <option value="No">No</option>
+          <option value="Yes">Yes</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-600">Requesting Account</label>
+        <select id="requesting_account" class="w-full border rounded-lg px-3 py-2 mt-1">
+          <option value="">Select account for requesting</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-600">Approval Account</label>
+        <select id="approval_account" class="w-full border rounded-lg px-3 py-2 mt-1">
+          <option value="">Select account for approval</option>
+        </select>
       </div>
       <div class="flex justify-end space-x-2">
         <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm bg-slate-200 hover:bg-slate-300 rounded-lg">Cancel</button>
@@ -76,6 +119,12 @@ $children = '
   <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
     <h2 class="text-lg font-bold mb-4">Approve Budget Request</h2>
     <div id="approveContent" class="space-y-2 text-sm"></div>
+    
+    <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-slate-700">
+      <p><strong>Note:</strong> Approval can be from either:</p>
+      <p>• Approver Account</p>
+      <p>• Finance/Admin Account</p>
+    </div>
 
     <div class="flex justify-end space-x-2 mt-6">
       <button type="button" onclick="closeApproveModal()" class="px-4 py-2 text-sm bg-slate-200 hover:bg-slate-300 rounded-lg">
@@ -108,7 +157,7 @@ adminLayout($children);
 ?>
 <<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
-const apiUrl = "https://financial.health-ease-hospital.com/api/budget_requests_api.php";
+const apiUrl = "http://localhost/financial2/api/budget_requests_api.php";
 
 // Toast helper
 function showToast(message, type) {
@@ -133,19 +182,22 @@ async function loadRequests() {
     tbody.innerHTML = "";
 
     data.forEach(req => {
+      // build action buttons based on session account_type
+      let actions = `<button class="text-blue-600 hover:text-blue-800" onclick="openApproveModal(${req.id})" title="View Request"><i class="bx bx-show text-xl"></i></button>`;
+      if (window.currentUser && parseInt(window.currentUser.account_type) === 1 && req.status !== 'Approved') {
+        actions += ` <button class="text-green-600 hover:text-green-800 ml-2" onclick="openApproveModal(${req.id})" title="Approve"><i class="bx bx-check text-xl"></i></button>`;
+      }
+
       tbody.innerHTML += `
         <tr>
           <td class="px-4 py-3 font-medium">${req.request_id}</td>
           <td class="px-4 py-3">${req.department}</td>
           <td class="px-4 py-3">${req.purpose}</td>
           <td class="px-4 py-3 text-green-600">₱${parseFloat(req.amount).toLocaleString()}</td>
+          <td class="px-4 py-3">${req.amount_limit ? '₱' + parseFloat(req.amount_limit).toLocaleString() : '-'}</td>
           <td class="px-4 py-3">${req.status || "Pending"}</td>
           <td class="px-4 py-3">${req.request_date || "-"}</td>
-          <td class="px-4 py-3 text-right">
-            <button class="text-red-600 hover:text-red-800" onclick="openDeleteModal(${req.id})">
-              <i class="bx bx-trash text-xl"></i>
-            </button>
-          </td>
+          <td class="px-4 py-3 text-right">${actions}</td>
         </tr>
       `;
     });
@@ -153,6 +205,23 @@ async function loadRequests() {
     console.error("Fetch error:", err);
     showToast("Failed to load budget requests.", "error");
   }
+}
+
+// load session info (user + account_type) so we can control approve access in UI
+function loadSession() {
+  return fetch('../api/session.php')
+    .then(res => res.json())
+    .then(data => {
+      if (data.logged_in && data.user) {
+        window.currentUser = data.user;
+      } else {
+        window.currentUser = null;
+      }
+    })
+    .catch(err => {
+      console.error('Failed to load session', err);
+      window.currentUser = null;
+    });
 }
 
 // Handle modal open/close
@@ -166,29 +235,60 @@ function closeModal() {
 
 // Handle form submit
 document.addEventListener("DOMContentLoaded", () => {
-  loadRequests();
+  // load session first (so we know if user can approve), then load accounts and requests
+  loadSession().then(() => {
+    loadAccountsForSelects();
+    loadRequests();
+  });
+
+  // Load accounts to populate requesting/approval account selects
+  async function loadAccountsForSelects() {
+    try {
+      const res = await fetch('http://localhost/financial2/api/chart_of_accounts_api.php');
+      const data = await res.json();
+      const reqSelect = document.getElementById('requesting_account');
+      const aprSelect = document.getElementById('approval_account');
+      if (!data || !Array.isArray(data)) return;
+      data.forEach(acc => {
+        const opt = document.createElement('option');
+        opt.value = acc.account_code || acc.id || acc.account_name;
+        opt.textContent = `${acc.account_code || ''} ${acc.account_name || ''}`.trim();
+        reqSelect.appendChild(opt.cloneNode(true));
+        aprSelect.appendChild(opt);
+      });
+    } catch (err) {
+      console.error('Failed to load accounts for selects', err);
+    }
+  }
+  // loadAccountsForSelects will be invoked after session is loaded
 
   const form = document.getElementById("requestForm");
   if (!form) return console.error("Form not found!");
 
-  form.addEventListener("submit", async (e) => {
+    form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const department = document.getElementById("department").value.trim();
     const purpose = document.getElementById("purpose").value.trim();
     const amount = document.getElementById("amount").value.trim();
+    const amount_limit = document.getElementById("amount_limit").value.trim();
+    const attendance_required = document.getElementById("attendance_required").value;
+    const item_list = document.getElementById("item_list").value.trim();
+    const approval_required = document.getElementById("approval_required").value;
+    const requesting_account = document.getElementById("requesting_account").value.trim();
+    const approval_account = document.getElementById("approval_account").value.trim();
 
     if (!department || !purpose || !amount) {
-      showToast("Please fill in all fields.", "error");
+      showToast("Please fill in required fields.", "error");
       return;
     }
 
     try {
-      console.log("Submitting to API:", { department, purpose, amount });
+      console.log("Submitting to API:", { department, purpose, amount, amount_limit, attendance_required, item_list, approval_required, requesting_account, approval_account });
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ department, purpose, amount })
+        body: JSON.stringify({ department, purpose, amount, amount_limit, attendance_required, item_list, approval_required, requesting_account, approval_account })
       });
 
       const result = await response.json();
@@ -224,6 +324,9 @@ async function approveRequest(id) {
       department: request.department,
       purpose: request.purpose,
       amount: request.amount,
+      // pass through accounts if present
+      requesting_account: request.requesting_account || null,
+      approval_account: request.approval_account || null,
       status: "Approved"
     })
   });
@@ -259,24 +362,37 @@ function closeModal() {
   document.getElementById("requestForm").reset(); 
 }
 
-document.addEventListener("DOMContentLoaded", loadRequests);
+// removed duplicate loadRequests listener; requests are loaded after session via the other DOMContentLoaded handler
 
 //Approve
 let approveRequestData = null; // store the full request object
 
-// Open modal
-function openApproveModal(request) {
-  approveRequestData = request;
+// Open modal (fetch full request by ID)
+async function openApproveModal(id) {
+  try {
+    const res = await fetch(apiUrl);
+    const data = await res.json();
+    const request = data.find(r => r.id == id);
+    if (!request) return showToast('Request not found', 'error');
 
-  document.getElementById("approveContent").innerHTML = `
-    <p><b>Category:</b> ${request.department}</p>
-    <p><b>Purpose:</b> ${request.purpose}</p>
-    <p><b>Amount:</b> ₱${parseFloat(request.amount).toLocaleString()}</p>
-    <p><b>Status:</b> Pending → <span class="text-green-600">Approved</span></p>
-  `;
+    approveRequestData = request;
+    document.getElementById("approveContent").innerHTML = `
+      <p><b>Request ID:</b> ${request.request_id}</p>
+      <p><b>Department:</b> ${request.department}</p>
+      <p><b>Purpose:</b> ${request.purpose}</p>
+      <p><b>Items:</b> ${request.item_list || '-'}</p>
+      <p><b>Amount:</b> ₱${parseFloat(request.amount).toLocaleString()}</p>
+      <p><b>Requesting Account:</b> ${request.requesting_account || '-'}</p>
+      <p><b>Approval Account:</b> ${request.approval_account || '-'}</p>
+      <p><b>Status:</b> ${request.status || 'Pending'}</p>
+    `;
 
-  document.getElementById("approveModal").classList.remove("hidden");
-  document.getElementById("approveModal").classList.add("flex");
+    document.getElementById("approveModal").classList.remove("hidden");
+    document.getElementById("approveModal").classList.add("flex");
+  } catch (err) {
+    console.error('openApproveModal error', err);
+    showToast('Failed to load request details', 'error');
+  }
 }
 
 // Close modal
@@ -299,6 +415,12 @@ document.getElementById("confirmApproveBtn").addEventListener("click", async () 
         department: approveRequestData.department,
         purpose: approveRequestData.purpose,
         amount: approveRequestData.amount,
+        amount_limit: approveRequestData.amount_limit || null,
+        attendance_required: approveRequestData.attendance_required || null,
+        item_list: approveRequestData.item_list || null,
+        approval_required: approveRequestData.approval_required || null,
+        requesting_account: approveRequestData.requesting_account || null,
+        approval_account: approveRequestData.approval_account || null,
         status: "Approved"
       })
     });

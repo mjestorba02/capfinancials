@@ -6,6 +6,7 @@ header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 
 include "db.php";
+session_start();
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -52,6 +53,12 @@ switch ($method) {
         $department = $conn->real_escape_string($data['department']);
         $purpose = $conn->real_escape_string($data['purpose']);
         $amount = $conn->real_escape_string($data['amount']);
+        $amount_limit = isset($data['amount_limit']) ? $conn->real_escape_string($data['amount_limit']) : null;
+        $attendance_required = isset($data['attendance_required']) ? $conn->real_escape_string($data['attendance_required']) : 'No';
+        $item_list = isset($data['item_list']) ? $conn->real_escape_string($data['item_list']) : null;
+        $approval_required = isset($data['approval_required']) ? $conn->real_escape_string($data['approval_required']) : 'No';
+        $requesting_account = isset($data['requesting_account']) ? $conn->real_escape_string($data['requesting_account']) : null;
+        $approval_account = isset($data['approval_account']) ? $conn->real_escape_string($data['approval_account']) : null;
 
         // Get the highest numeric part from existing request_id (e.g. REQ-001 → 1)
         $result = $conn->query("SELECT MAX(CAST(SUBSTRING(request_id, 5) AS UNSIGNED)) AS last_number FROM budget_requests");
@@ -70,18 +77,19 @@ switch ($method) {
         // Format as REQ-001, REQ-002, etc.
         $request_id = "REQ-" . str_pad($nextNumber, 3, "0", STR_PAD_LEFT);
 
-        $sql = "INSERT INTO budget_requests (request_id, department, purpose, amount)
-                VALUES ('$request_id', '$department', '$purpose', '$amount')";
+        // Use prepared statement for safer insert including new fields
+        $stmt = $conn->prepare("INSERT INTO budget_requests (request_id, department, purpose, amount, amount_limit, attendance_required, item_list, approval_required, requesting_account, approval_account) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param('sssddsssss', $request_id, $department, $purpose, $amount, $amount_limit, $attendance_required, $item_list, $approval_required, $requesting_account, $approval_account);
+        error_log("[budget_requests_api.php DEBUG] Executing prepared insert for $request_id");
 
-        error_log("[budget_requests_api.php DEBUG] Executing SQL: " . $sql);
-
-        if ($conn->query($sql)) {
+        if ($stmt->execute()) {
             error_log("[budget_requests_api.php DEBUG] Insert success for $request_id");
             echo json_encode(["success" => true, "message" => "Request added successfully"]);
         } else {
-            error_log("[budget_requests_api.php ERROR] Insert failed: " . $conn->error);
-            echo json_encode(["success" => false, "error" => $conn->error]);
+            error_log("[budget_requests_api.php ERROR] Insert failed: " . $stmt->error);
+            echo json_encode(["success" => false, "error" => $stmt->error]);
         }
+        $stmt->close();
         break;
 
     case "PUT":
@@ -94,13 +102,42 @@ switch ($method) {
         $purpose = $conn->real_escape_string($data['purpose']);
         $amount = $conn->real_escape_string($data['amount']);
         $status = $conn->real_escape_string($data['status']);
+        $amount_limit = isset($data['amount_limit']) ? $conn->real_escape_string($data['amount_limit']) : null;
+        $attendance_required = isset($data['attendance_required']) ? $conn->real_escape_string($data['attendance_required']) : 'No';
+        $item_list = isset($data['item_list']) ? $conn->real_escape_string($data['item_list']) : null;
+        $approval_required = isset($data['approval_required']) ? $conn->real_escape_string($data['approval_required']) : 'No';
+        $requesting_account = isset($data['requesting_account']) ? $conn->real_escape_string($data['requesting_account']) : null;
+        $approval_account = isset($data['approval_account']) ? $conn->real_escape_string($data['approval_account']) : null;
 
-        $sql = "UPDATE budget_requests 
-                SET department='$department', purpose='$purpose', amount='$amount', status='$status' 
-                WHERE id=$id";
-        error_log("[budget_requests_api.php DEBUG] Executing SQL: " . $sql);
+        // If trying to approve, ensure current user is authorized (account_type == 1)
+        if ($status === "Approved") {
+            if (!isset($_SESSION['id'])) {
+                echo json_encode(["success" => false, "error" => "Not authenticated to approve"]);
+                exit;
+            }
+            $currentUserId = intval($_SESSION['id']);
+            $uStmt = $conn->prepare("SELECT account_type FROM users WHERE id = ?");
+            $uStmt->bind_param('i', $currentUserId);
+            $uStmt->execute();
+            $uRes = $uStmt->get_result();
+            if (!$uRes || $uRes->num_rows === 0) {
+                echo json_encode(["success" => false, "error" => "Cannot verify user account"]);
+                exit;
+            }
+            $uRow = $uRes->fetch_assoc();
+            $uStmt->close();
+            if (!isset($uRow['account_type']) || intval($uRow['account_type']) !== 1) {
+                echo json_encode(["success" => false, "error" => "Not authorized to approve"]);
+                exit;
+            }
+        }
 
-        if ($conn->query($sql)) {
+        // Use prepared statement to update
+        $stmt = $conn->prepare("UPDATE budget_requests SET department=?, purpose=?, amount=?, amount_limit=?, attendance_required=?, item_list=?, approval_required=?, requesting_account=?, approval_account=?, status=? WHERE id=?");
+        $stmt->bind_param('ssddssssssi', $department, $purpose, $amount, $amount_limit, $attendance_required, $item_list, $approval_required, $requesting_account, $approval_account, $status, $id);
+        error_log("[budget_requests_api.php DEBUG] Executing prepared update for ID: $id");
+
+        if ($stmt->execute()) {
             if ($status === "Approved") {
                 $insertPlan = "INSERT INTO planning (request_id, department, purpose, amount, approved_at)
                                SELECT request_id, department, purpose, amount, NOW() 
@@ -110,9 +147,10 @@ switch ($method) {
             }
             echo json_encode(["success" => true, "message" => "Request updated successfully"]);
         } else {
-            error_log("[budget_requests_api.php ERROR] Update failed: " . $conn->error);
-            echo json_encode(["success" => false, "error" => $conn->error]);
+            error_log("[budget_requests_api.php ERROR] Update failed: " . $stmt->error);
+            echo json_encode(["success" => false, "error" => $stmt->error]);
         }
+        $stmt->close();
         break;
 
     case "DELETE":

@@ -166,7 +166,7 @@
     const password = document.getElementById("regPassword").value.trim();
 
     try {
-  const res = await fetch("https://financial.health-ease-hospital.com/api/users.php", {
+  const res = await fetch("http://localhost/financial2/api/users.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password })
@@ -189,12 +189,21 @@
     const password = document.getElementById("loginPassword").value.trim();
 
     try {
-  const res = await fetch("https://financial.health-ease-hospital.com/api/auth.php", {
+      const res = await fetch("http://localhost/financial2/api/auth.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password })
       });
-      const data = await res.json();
+
+      const text = await res.text();
+      let data = null;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error('Non-JSON response from auth.php:', text);
+        showToast('Server error during login. Check console for details.', 'error');
+        return;
+      }
 
       if (data.status === "otp_required") {
         showToast(data.message, "success");
@@ -215,12 +224,21 @@
     const otp = document.getElementById("otpCode").value.trim();
 
     try {
-  const res = await fetch("https://financial.health-ease-hospital.com/api/verify_otp.php", {
+      const res = await fetch("http://localhost/financial2/api/verify_otp.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ otp })
       });
-      const data = await res.json();
+
+      const text = await res.text();
+      let data = null;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error('Non-JSON response from verify_otp.php:', text);
+        showToast('Server error during OTP verification. Check console for details.', 'error');
+        return;
+      }
 
       if (data.status === "success") {
         showToast(data.message, "success");

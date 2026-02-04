@@ -31,6 +31,21 @@ $children = '
     </div>
   </div>
 
+  <!-- Charts Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Account Distribution Chart -->
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow">
+      <h3 class="text-lg font-semibold mb-4">Account Distribution</h3>
+      <canvas id="accountDistributionChart" class="w-full" height="250"></canvas>
+    </div>
+    
+    <!-- Account Type Breakdown Chart -->
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow">
+      <h3 class="text-lg font-semibold mb-4">Account Type Breakdown</h3>
+      <canvas id="accountTypeChart" class="w-full" height="250"></canvas>
+    </div>
+  </div>
+
   <!-- Accounts Table -->
   <div class="bg-white p-6 rounded-xl border border-slate-200 shadow">
     <div class="flex justify-between items-center mb-4">
@@ -209,8 +224,11 @@ adminLayout($children);
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-  const API_URL = "https://financial.health-ease-hospital.com/api/chart_of_accounts_api.php";
+  const API_URL = "http://localhost/financial2/api/chart_of_accounts_api.php";
 
   // ===================== TOAST FUNCTION =====================
   function showToast(message, type) {
@@ -270,6 +288,92 @@ adminLayout($children);
     document.getElementById("totalAssets").innerText = "₱" + assets.toLocaleString();
     document.getElementById("totalLiabilities").innerText = "₱" + liabilities.toLocaleString();
     document.getElementById("totalEquity").innerText = "₱" + equity.toLocaleString();
+
+    // Render Charts
+    renderAccountDistributionChart(assets, liabilities, equity);
+    renderAccountTypeChart(data);
+  }
+
+  // Account Distribution Chart (Pie Chart)
+  let accountDistributionChart = null;
+  function renderAccountDistributionChart(assets, liabilities, equity) {
+    const ctx = document.getElementById("accountDistributionChart")?.getContext("2d");
+    if (!ctx) return;
+
+    if (accountDistributionChart) {
+      accountDistributionChart.destroy();
+    }
+
+    accountDistributionChart = new Chart(ctx, {
+      type: "doughnut",
+      data: {
+        labels: ["Assets", "Liabilities", "Equity"],
+        datasets: [{
+          data: [assets, liabilities, equity],
+          backgroundColor: ["#10b981", "#ef4444", "#3b82f6"],
+          borderColor: ["#059669", "#dc2626", "#1d4ed8"],
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: { padding: 15 }
+          }
+        }
+      }
+    });
+  }
+
+  // Account Type Breakdown Chart (Bar Chart)
+  let accountTypeChart = null;
+  function renderAccountTypeChart(data) {
+    const ctx = document.getElementById("accountTypeChart")?.getContext("2d");
+    if (!ctx) return;
+
+    // Count by account type
+    const typeCount = {};
+    data.forEach(acc => {
+      const type = acc.account_type || "Other";
+      typeCount[type] = (typeCount[type] || 0) + 1;
+    });
+
+    if (accountTypeChart) {
+      accountTypeChart.destroy();
+    }
+
+    accountTypeChart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: Object.keys(typeCount),
+        datasets: [{
+          label: "Number of Accounts",
+          data: Object.values(typeCount),
+          backgroundColor: "#f59e0b",
+          borderColor: "#d97706",
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: "top"
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1 }
+          }
+        }
+      }
+    });
   }
 
   // Filter

@@ -50,7 +50,10 @@ $children = '
             <th class="px-4 py-3">Payment ID</th>
             <th class="px-4 py-3">Vendor</th>
             <th class="px-4 py-3">Payment Date</th>
+            <th class="px-4 py-3">Mode of Payment</th>
+            <th class="px-4 py-3">Release Date</th>
             <th class="px-4 py-3">Amount</th>
+            <th class="px-4 py-3">Received By</th>
             <th class="px-4 py-3">Status</th>
             <th class="px-4 py-3 text-right">Actions</th>
           </tr>
@@ -79,8 +82,26 @@ $children = '
         <input type="date" name="payment_date" id="payment_date" class="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-orange-200" required>
       </div>
       <div class="mb-4">
+        <label class="block text-sm font-medium text-slate-600">Mode of Payment</label>
+        <select name="mode_of_payment" id="mode_of_payment" class="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-orange-200" required>
+          <option value="">Select Mode</option>
+          <option value="Standard">Standard</option>
+          <option value="Posted Check">Posted Check</option>
+          <option value="Online Transfer">Online Transfer</option>
+          <option value="Cash">Cash</option>
+        </select>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-slate-600">Release Date</label>
+        <input type="date" name="release_date" id="release_date" class="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-orange-200" required>
+      </div>
+      <div class="mb-4">
         <label class="block text-sm font-medium text-slate-600">Amount</label>
         <input type="number" name="amount" id="amount" step="0.01" class="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-orange-200" required>
+      </div>
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-slate-600">Received By (Name & Signature)</label>
+        <input type="text" name="received_by" id="received_by" class="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:ring-orange-200" placeholder="Enter receiver name" required>
       </div>
       <div class="mb-4">
         <label class="block text-sm font-medium text-slate-600">Status</label>
@@ -113,6 +134,12 @@ $children = '
   <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
     <h2 class="text-xl font-bold mb-4">Approve Payment</h2>
     <div id="approveContent" class="space-y-2 text-slate-700"></div>
+    
+    <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-slate-700">
+      <p><strong>⚠️ Important:</strong></p>
+      <p>Please consult with the Accountant Department before approving this payment to ensure all compliance requirements are met.</p>
+    </div>
+    
     <div class="flex justify-end mt-4 space-x-2">
       <button onclick="closeApproveModal()" class="px-4 py-2 rounded-lg border">Cancel</button>
       <button id="confirmApproveBtn" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg">Approve</button>
@@ -124,7 +151,7 @@ $children = '
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
-  const apiUrl = "https://financial.health-ease-hospital.com/api/payments_api.php";
+  const apiUrl = "http://localhost/financial2/api/payments_api.php";
 
   // ===================== TOAST FUNCTION =====================
   function showToast(message, type) {
@@ -154,7 +181,10 @@ $children = '
         <td class="px-4 py-3 font-medium">${payment.payment_id}</td>
         <td class="px-4 py-3">${payment.vendor}</td>
         <td class="px-4 py-3">${payment.payment_date}</td>
+        <td class="px-4 py-3">${payment.mode_of_payment || "-"}</td>
+        <td class="px-4 py-3">${payment.release_date || "-"}</td>
         <td class="px-4 py-3 text-red-600">₱${parseFloat(payment.amount).toLocaleString()}</td>
+        <td class="px-4 py-3 blur-sm">${payment.received_by || "-"}</td>
         <td class="px-4 py-3 ${payment.status === "Completed" ? "text-green-600" : "text-yellow-600"}">${payment.status}</td>
         <td class="px-4 py-3 text-right space-x-2">
           ${payment.status === "Pending" 
@@ -212,7 +242,10 @@ document.getElementById("paymentForm").addEventListener("submit", async (e) => {
     document.getElementById("paymentId").value = payment.id;
     document.getElementById("vendor").value = payment.vendor;
     document.getElementById("payment_date").value = payment.payment_date;
+    document.getElementById("mode_of_payment").value = payment.mode_of_payment || "";
+    document.getElementById("release_date").value = payment.release_date || "";
     document.getElementById("amount").value = payment.amount;
+    document.getElementById("received_by").value = payment.received_by || "";
     document.getElementById("status").value = payment.status;
 
     openPaymentModal();
@@ -229,7 +262,10 @@ document.getElementById("paymentForm").addEventListener("submit", async (e) => {
       <p><b>Payment ID:</b> ${payment.payment_id}</p>
       <p><b>Vendor:</b> ${payment.vendor}</p>
       <p><b>Date:</b> ${payment.payment_date}</p>
+      <p><b>Mode of Payment:</b> ${payment.mode_of_payment || "-"}</p>
+      <p><b>Release Date:</b> ${payment.release_date || "-"}</p>
       <p><b>Amount:</b> ₱${parseFloat(payment.amount).toLocaleString()}</p>
+      <p><b>Received By:</b> ${payment.received_by || "-"}</p>
       <p><b>Status:</b> ${payment.status}</p>
     `;
 

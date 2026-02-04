@@ -43,10 +43,20 @@ if (!$user || !password_verify($password, $user['password'])) {
 
 // Generate OTP
 $otp = random_int(100000, 999999);
+$otp_expires = time() + 300; // valid for 5 minutes
+$user_id = $user['id'];
+
+// Store OTP in database
+$stmt = $conn->prepare("INSERT INTO otp_sessions (user_id, email, otp_code, expires_at, created_at) VALUES (?, ?, ?, FROM_UNIXTIME(?), NOW())");
+$stmt->bind_param("issi", $user_id, $user['email'], $otp, $otp_expires);
+$stmt->execute();
+$stmt->close();
+
+// Also store in session for backup
 $_SESSION['otp'] = $otp;
 $_SESSION['otp_email'] = $user['email'];
-$_SESSION['otp_expires'] = time() + 300; // valid for 5 minutes
-$_SESSION['pre_login_user'] = $user; // store user temporarily
+$_SESSION['otp_expires'] = $otp_expires;
+$_SESSION['pre_login_user'] = $user;
 
 // Send OTP via PHPMailer
 $mail = new PHPMailer(true);

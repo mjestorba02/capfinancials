@@ -11,9 +11,9 @@ $children = '
       <h1 class="text-2xl font-bold">Collections</h1>
       <p class="text-sm text-slate-500">Manage and track your collections</p>
     </div>
-    <button onclick="openAddModal()" class="bg-orange-500 hover:bg-orange-600 text-white text-sm px-4 py-2 rounded-lg shadow">
+    <!-- <button onclick="openAddModal()" class="bg-orange-500 hover:bg-orange-600 text-white text-sm px-4 py-2 rounded-lg shadow">
       + Add Collection
-    </button>
+    </button> -->
   </div>
 
   <!-- Collections Table -->
@@ -125,7 +125,7 @@ adminLayout($children);
 ?>
 
 <script>
-const apiUrl = "https://financial.health-ease-hospital.com/api/collections.php";
+const apiUrl = "http://localhost/financial2/api/collections.php";
 
 // ===================== LOAD COLLECTIONS =====================
 async function loadCollections() {
