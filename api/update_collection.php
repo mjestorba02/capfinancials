@@ -45,15 +45,3 @@ if (!mysqli_query($conn, $sql)) {
     echo json_encode(["status" => "error", "message" => "MySQL Error: " . mysqli_error($conn)]);
     exit;
 }
-
-if (mysqli_affected_rows($conn) > 0) {
-    // Insert notification
-    $msg  = "Collection Invoice #$invoice_no updated. Status: $status";
-    $link = "collections.php?invoice_no=" . urlencode($invoice_no);
-    mysqli_query($conn, "INSERT INTO notifications (module, record_id, message, link) 
-                         VALUES ('collections', '$invoice_no', '$msg', '$link')");
-
-    echo json_encode(["status" => "success", "message" => "Collection updated successfully"]);
-} else {
-    echo json_encode(["status" => "error", "message" => "No changes made or invoice not found"]);
-}

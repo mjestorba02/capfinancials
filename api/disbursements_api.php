@@ -125,8 +125,8 @@ switch ($method) {
 
           // Insert into archived_disbursements table
           $archive_stmt = $conn->prepare(
-            "INSERT INTO archived_disbursements (id, voucher_no, vendor, category, amount, status, disbursement_date, created_at, archived_by, archive_reason, module) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO archived_disbursements (id, voucher_no, vendor, category, amount, status, disbursement_date, created_at, archived_by, archive_reason) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
           );
           
           if (!$archive_stmt) {
@@ -135,11 +135,10 @@ switch ($method) {
 
           $archived_by = $_SESSION['user_id'] ?? 'System';
           $archive_reason = $data['reason'] ?? '';
-          $module = 'disbursements'; // Add module field
 
-          // Bind parameters - 11 variables need 11 type characters
+          // Bind parameters - 10 variables need 10 type characters
           if (!$archive_stmt->bind_param(
-            "isssdssssss",
+            "isssdsssss",
             $record['id'],
             $record['voucher_no'],
             $record['vendor'],
@@ -149,8 +148,7 @@ switch ($method) {
             $record['disbursement_date'],
             $record['created_at'],
             $archived_by,
-            $archive_reason,
-            $module
+            $archive_reason
           )) {
             throw new Exception("Bind param failed: " . $archive_stmt->error);
           }
