@@ -192,7 +192,7 @@ $children = '
             : ""}
           <button class="text-blue-600 hover:text-blue-800" onclick="editPayment(${payment.id})"><i class="bx bx-edit"></i></button>
           <button class="text-gray-600 hover:text-gray-800" onclick="viewPayment(${payment.id})"><i class="bx bx-show"></i></button>
-          <button class="text-red-600 hover:text-red-800" onclick="deletePayment(${payment.id})"><i class="bx bx-trash"></i></button>
+          <!-- <button class="text-red-600 hover:text-red-800" onclick="deletePayment(${payment.id})"><i class="bx bx-trash"></i></button> -->
         </td>
       `;
       tbody.appendChild(row);
