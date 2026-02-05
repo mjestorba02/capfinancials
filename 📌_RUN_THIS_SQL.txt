@@ -1,0 +1,193 @@
+================================================================================
+                        🔴 STOP - READ THIS FIRST 🔴
+================================================================================
+
+This file contains the EXACT SQL commands you need to run in your database.
+
+THESE 3 SQL STATEMENTS ARE ALL YOU NEED TO RUN:
+
+================================================================================
+
+                        SQL TO COPY AND PASTE
+                        (Run in phpMyAdmin or MySQL)
+
+================================================================================
+
+Statement 1 of 3 - CREATE ARCHIVED TABLE:
+
+CREATE TABLE IF NOT EXISTS `archived_disbursements` (
+  `id` int(11) NOT NULL,
+  `voucher_no` varchar(50) NOT NULL,
+  `vendor` varchar(255) NOT NULL,
+  `category` varchar(100) NOT NULL,
+  `amount` decimal(12,2) NOT NULL,
+  `status` enum('Released','Pending') DEFAULT 'Pending',
+  `disbursement_date` date NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `archived_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `archived_by` varchar(255) DEFAULT NULL,
+  `archive_reason` text DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_voucher_no` (`voucher_no`),
+  KEY `idx_archived_at` (`archived_at`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+Expected Result: ✅ Query executed successfully
+
+================================================================================
+
+Statement 2 of 3 - ADD COLUMNS TO DISBURSEMENTS:
+
+ALTER TABLE `disbursements` 
+ADD COLUMN `is_archived` tinyint(1) NOT NULL DEFAULT 0 AFTER `created_at`,
+ADD COLUMN `archived_at` timestamp NULL AFTER `is_archived`;
+
+Expected Result: ✅ Query executed successfully
+
+================================================================================
+
+Statement 3 of 3 - ADD INDEX:
+
+ALTER TABLE `disbursements`
+ADD INDEX `idx_is_archived` (`is_archived`);
+
+Expected Result: ✅ Query executed successfully
+
+================================================================================
+
+                        HOW TO RUN THESE QUERIES
+
+================================================================================
+
+OPTION A: Using phpMyAdmin (Easiest)
+────────────────────────────────────
+
+1. Open: http://localhost/phpmyadmin/
+2. Click your "capfinancial" database
+3. Click "SQL" tab (at top)
+4. Copy Statement 1 above
+5. Paste it in the SQL box
+6. Click "Go" or "Execute"
+7. Wait for success message ✅
+8. Repeat for Statement 2
+9. Repeat for Statement 3
+
+OPTION B: Using MySQL Command Line
+───────────────────────────────────
+
+1. Open Command Prompt or Terminal
+2. Type: mysql -u root -p (or mysql -u root -pYOURPASSWORD)
+3. Type: use capfinancial;
+4. Copy-paste each statement above
+5. Press Enter after each
+
+OPTION C: Using MySQL Workbench
+────────────────────────────────
+
+1. Open MySQL Workbench
+2. Click your local connection
+3. Click File → Open SQL Script
+4. Copy the 3 statements above into a .sql file
+5. Open that file in Workbench
+6. Click the Execute (lightning bolt) button
+
+================================================================================
+
+                        VERIFICATION
+
+================================================================================
+
+After running all 3 statements, verify with these queries:
+
+Check 1 - Verify archived_disbursements table exists:
+    SHOW TABLES LIKE 'archived_disbursements';
+    Expected: Should show 1 result (archived_disbursements)
+
+Check 2 - Verify new columns were added:
+    SHOW COLUMNS FROM disbursements;
+    Expected: Should show "is_archived" and "archived_at" columns
+
+Check 3 - Verify archive table structure:
+    DESCRIBE archived_disbursements;
+    Expected: Should show all fields listed above
+
+================================================================================
+
+                        TROUBLESHOOTING
+
+================================================================================
+
+Problem: "Table already exists"
+Solution: This is fine - it means it was already created. Continue with Statement 2.
+
+Problem: "Duplicate column name"
+Solution: The columns already exist. This is OK. You can skip that statement.
+
+Problem: "Query syntax error"
+Solution: Make sure you copied the ENTIRE statement. No parts should be missing.
+
+Problem: "Access denied"
+Solution: Make sure you have database permissions. Check with your host.
+
+Problem: "Unknown database"
+Solution: Make sure you selected the "capfinancial" database first.
+
+================================================================================
+
+                        AFTER RUNNING SQL
+
+================================================================================
+
+✅ DO THIS AFTER YOUR SQL IS SUCCESSFUL:
+
+1. Refresh your browser (Ctrl+F5)
+2. Go to your Disbursement page
+3. You should see an ARCHIVE button (not DELETE)
+4. Check the sidebar for "Archived Disbursements" link
+5. Test by clicking Archive on a test record
+
+✅ You're done! The system is ready to use.
+
+================================================================================
+
+                    📋 SAVE THIS CHECKLIST
+
+================================================================================
+
+Database Setup:
+☐ Statement 1 executed successfully
+☐ Statement 2 executed successfully  
+☐ Statement 3 executed successfully
+☐ Verified with Check 1 query
+☐ Verified with Check 2 query
+☐ Verified with Check 3 query
+
+Front-End Setup:
+☐ Disbursement page shows ARCHIVE button
+☐ Sidebar shows "Archived Disbursements" link
+☐ Archived page loads without errors
+☐ Can archive a test record
+☐ Can view archived records
+☐ Can retrieve archived records
+
+================================================================================
+
+                        🎉 YOU'RE ALL SET!
+
+================================================================================
+
+The archive system is now active. Users can:
+
+→ Archive disbursements (instead of deleting)
+→ View archived records in a separate page
+→ Retrieve (restore) archived records
+→ Permanently delete when needed
+
+No more lost data! Everything is recoverable until permanently deleted.
+
+================================================================================
+
+Questions? See: QUICK_START.md or ARCHIVE_SYSTEM_IMPLEMENTATION.md
+
+================================================================================

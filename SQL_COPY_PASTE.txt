@@ -1,0 +1,76 @@
+================================================================================
+                    DISBURSEMENT ARCHIVE SYSTEM
+                        COPY-PASTE READY SQL
+================================================================================
+
+INSTRUCTIONS:
+1. Open phpMyAdmin or your MySQL client
+2. Select your "capfinancial" database
+3. Go to SQL tab
+4. Copy and paste the SQL below
+5. Click Execute
+
+================================================================================
+
+-- STEP 1: Create archived_disbursements table
+CREATE TABLE IF NOT EXISTS `archived_disbursements` (
+  `id` int(11) NOT NULL,
+  `voucher_no` varchar(50) NOT NULL,
+  `vendor` varchar(255) NOT NULL,
+  `category` varchar(100) NOT NULL,
+  `amount` decimal(12,2) NOT NULL,
+  `status` enum('Released','Pending') DEFAULT 'Pending',
+  `disbursement_date` date NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `archived_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `archived_by` varchar(255) DEFAULT NULL,
+  `archive_reason` text DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_voucher_no` (`voucher_no`),
+  KEY `idx_archived_at` (`archived_at`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- STEP 2: Add archive columns to disbursements table
+ALTER TABLE `disbursements` 
+ADD COLUMN `is_archived` tinyint(1) NOT NULL DEFAULT 0 AFTER `created_at`,
+ADD COLUMN `archived_at` timestamp NULL AFTER `is_archived`,
+ADD INDEX `idx_is_archived` (`is_archived`);
+
+================================================================================
+
+EXPECTED OUTPUT:
+✅ Query executed successfully (for table creation)
+✅ Query executed successfully (for ALTER TABLE)
+
+Then you'll see:
+- New table "archived_disbursements" in your database
+- Two new columns in "disbursements" table:
+  * is_archived
+  * archived_at
+
+================================================================================
+
+NEXT STEPS:
+1. Refresh your browser (clear cache if needed)
+2. Go to Disbursement page
+3. Click Archive button (orange 📦 icon) on any record
+4. Check sidebar for new "Archived Disbursements" link
+5. View archived records with retrieve/delete options
+
+================================================================================
+
+VERIFY INSTALLATION:
+Run these queries to check if everything is set up:
+
+-- Check archived_disbursements table exists
+SHOW TABLES LIKE 'archived_disbursements';
+
+-- Check disbursements columns
+SHOW COLUMNS FROM disbursements;
+
+-- Should show:
+-- is_archived (tinyint) - DEFAULT 0
+-- archived_at (timestamp) - NULL
+
+================================================================================

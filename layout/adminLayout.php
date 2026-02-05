@@ -135,11 +135,24 @@ function adminLayout($children) {
             </div>
           </div>
 
-          <!-- Disbursement -->
-          <a href="disbursement.php" class="flex items-center space-x-3 px-2 py-2 rounded <?php echo ($currentPage=='disbursement.php') ? 'bg-orange-500 text-white' : 'hover:bg-slate-800'; ?>">
-            <i class='bx bx-wallet text-lg'></i>
-            <span class="text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">Disbursement</span>
-          </a>
+          <!-- Disbursement with Dropdown -->
+          <div class="w-full">
+            <button onclick="toggleDisbursementDropdown()" class="flex items-center justify-between w-full px-2 py-2 hover:text-orange-400 <?php echo ($currentPage=='disbursement.php' || $currentPage=='archived_disbursement.php') ? 'text-orange-500' : ''; ?>">
+              <span class="flex items-center space-x-3">
+                <i class='bx bx-wallet text-lg'></i>
+                <span class="text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-200">Disbursement</span>
+              </span>
+              <i class='bx bx-chevron-down opacity-0 group-hover:opacity-100 transition-opacity duration-200'></i>
+            </button>
+            <div id="disbursementDropdown" class="ml-8 mt-1 hidden flex-col space-y-2">
+              <a href="disbursement.php" class="block px-2 py-1 text-sm rounded <?php echo ($currentPage=='disbursement.php') ? 'bg-orange-500 text-white' : 'hover:bg-slate-800'; ?>">
+                Active Disbursements
+              </a>
+              <a href="archived_disbursement.php" class="block px-2 py-1 text-sm rounded <?php echo ($currentPage=='archived_disbursement.php') ? 'bg-orange-500 text-white' : 'hover:bg-slate-800'; ?>">
+                Archived Disbursements
+              </a>
+            </div>
+          </div>
 
         </nav>
       </div>
@@ -380,6 +393,11 @@ document.addEventListener("DOMContentLoaded", () => {
     dropdown.classList.toggle('hidden');
   }
 
+  function toggleDisbursementDropdown() {
+    const dropdown = document.getElementById('disbursementDropdown');
+    dropdown.classList.toggle('hidden');
+  }
+
   function toggleBudgetDropdown() {
     const dropdown = document.getElementById('budgetDropdown');
     dropdown.classList.toggle('hidden');
@@ -389,6 +407,13 @@ document.addEventListener("DOMContentLoaded", () => {
   <?php if ($currentPage == 'chart_of_accounts.php'): ?>
     document.addEventListener("DOMContentLoaded", function() {
       document.getElementById('dropdown').classList.remove('hidden');
+    });
+  <?php endif; ?>
+
+  // Auto expand Disbursement dropdown if on archived page or active page
+  <?php if (in_array($currentPage, ['disbursement.php', 'archived_disbursement.php'])): ?>
+    document.addEventListener("DOMContentLoaded", function() {
+      document.getElementById('disbursementDropdown').classList.remove('hidden');
     });
   <?php endif; ?>
 

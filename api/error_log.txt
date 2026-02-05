@@ -1,0 +1,63 @@
+[05-Feb-2026 09:11:26 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\financial2\api\disbursements_api.php:110
+Stack trace:
+#0 C:\xampp\htdocs\financial2\api\disbursements_api.php(110): mysqli_stmt->bind_param('issssdsss', 13, 'VCH-004', 'LOVE', 'Salaries', '1000.00', 'Released', '2026-01-27', '2026-01-27 17:5...', 'System', '')
+#1 {main}
+  thrown in C:\xampp\htdocs\financial2\api\disbursements_api.php on line 110
+[05-Feb-2026 09:12:19 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\financial2\api\disbursements_api.php:110
+Stack trace:
+#0 C:\xampp\htdocs\financial2\api\disbursements_api.php(110): mysqli_stmt->bind_param('issssdsss', 13, 'VCH-004', 'LOVE', 'Salaries', '1000.00', 'Released', '2026-01-27', '2026-01-27 17:5...', 'System', '')
+#1 {main}
+  thrown in C:\xampp\htdocs\financial2\api\disbursements_api.php on line 110
+[05-Feb-2026 09:15:35 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\financial2\api\disbursements_api.php:110
+Stack trace:
+#0 C:\xampp\htdocs\financial2\api\disbursements_api.php(110): mysqli_stmt->bind_param('ississdss', 13, 'VCH-004', 'LOVE', 'Salaries', '1000.00', 'Released', '2026-01-27', '2026-01-27 17:5...', 'System', '')
+#1 {main}
+  thrown in C:\xampp\htdocs\financial2\api\disbursements_api.php on line 110
+[05-Feb-2026 09:18:47 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\financial2\api\disbursements_api.php:110
+Stack trace:
+#0 C:\xampp\htdocs\financial2\api\disbursements_api.php(110): mysqli_stmt->bind_param('ississdss', 13, 'VCH-004', 'LOVE', 'Salaries', '1000.00', 'Released', '2026-01-27', '2026-01-27 17:5...', 'System', '')
+#1 {main}
+  thrown in C:\xampp\htdocs\financial2\api\disbursements_api.php on line 110
+[05-Feb-2026 09:18:55 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\financial2\api\disbursements_api.php:110
+Stack trace:
+#0 C:\xampp\htdocs\financial2\api\disbursements_api.php(110): mysqli_stmt->bind_param('ississdss', 13, 'VCH-004', 'LOVE', 'Salaries', '1000.00', 'Released', '2026-01-27', '2026-01-27 17:5...', 'System', '')
+#1 {main}
+  thrown in C:\xampp\htdocs\financial2\api\disbursements_api.php on line 110
+[05-Feb-2026 09:19:19 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\financial2\api\disbursements_api.php:110
+Stack trace:
+#0 C:\xampp\htdocs\financial2\api\disbursements_api.php(110): mysqli_stmt->bind_param('ississdss', 13, 'VCH-004', 'LOVE', 'Salaries', '1000.00', 'Released', '2026-01-27', '2026-01-27 17:5...', 'System', '')
+#1 {main}
+  thrown in C:\xampp\htdocs\financial2\api\disbursements_api.php on line 110
+[05-Feb-2026 09:19:34 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\financial2\api\disbursements_api.php:110
+Stack trace:
+#0 C:\xampp\htdocs\financial2\api\disbursements_api.php(110): mysqli_stmt->bind_param('ississdss', 13, 'VCH-004', 'LOVE', 'Salaries', '1000.00', 'Released', '2026-01-27', '2026-01-27 17:5...', 'System', '')
+#1 {main}
+  thrown in C:\xampp\htdocs\financial2\api\disbursements_api.php on line 110
+[05-Feb-2026 09:19:55 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\financial2\api\disbursements_api.php:110
+Stack trace:
+#0 C:\xampp\htdocs\financial2\api\disbursements_api.php(110): mysqli_stmt->bind_param('ississdss', 13, 'VCH-004', 'LOVE', 'Salaries', '1000.00', 'Released', '2026-01-27', '2026-01-27 17:5...', 'System', '')
+#1 {main}
+  thrown in C:\xampp\htdocs\financial2\api\disbursements_api.php on line 110
+[05-Feb-2026 09:31:55 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\financial2\api\disbursements_api.php:125
+Stack trace:
+#0 C:\xampp\htdocs\financial2\api\disbursements_api.php(125): mysqli_stmt->bind_param('ississdss', 13, 'VCH-004', 'LOVE', 'Salaries', '1000.00', 'Released', '2026-01-27', '2026-01-27 17:5...', 'System', '')
+#1 {main}
+  thrown in C:\xampp\htdocs\financial2\api\disbursements_api.php on line 125
+[05-Feb-2026 09:36:27 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\financial2\api\disbursements_api.php:125
+Stack trace:
+#0 C:\xampp\htdocs\financial2\api\disbursements_api.php(125): mysqli_stmt->bind_param('isssdssss', 13, 'VCH-004', 'LOVE', 'Salaries', '1000.00', 'Released', '2026-01-27', '2026-01-27 17:5...', 'System', '')
+#1 {main}
+  thrown in C:\xampp\htdocs\financial2\api\disbursements_api.php on line 125
+[05-Feb-2026 09:41:21 Europe/Berlin] PHP Fatal error:  Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\financial2\api\disbursements_api.php:140
+Stack trace:
+#0 C:\xampp\htdocs\financial2\api\disbursements_api.php(140): mysqli_stmt->bind_param('isssdssss', 13, 'VCH-004', 'LOVE', 'Salaries', '1000.00', 'Released', '2026-01-27', '2026-01-27 17:5...', 'System', '')
+#1 {main}
+  thrown in C:\xampp\htdocs\financial2\api\disbursements_api.php on line 140
+[2026-02-05 09:41:21] FATAL: Uncaught ArgumentCountError: The number of elements in the type definition string must match the number of bind variables in C:\xampp\htdocs\financial2\api\disbursements_api.php:140
+Stack trace:
+#0 C:\xampp\htdocs\financial2\api\disbursements_api.php(140): mysqli_stmt->bind_param('isssdssss', 13, 'VCH-004', 'LOVE', 'Salaries', '1000.00', 'Released', '2026-01-27', '2026-01-27 17:5...', 'System', '')
+#1 {main}
+  thrown in C:\xampp\htdocs\financial2\api\disbursements_api.php:140
+[2026-02-05 09:42:10] Archive error: Duplicate entry '13' for key 'PRIMARY'
+[2026-02-05 09:43:30] POST exception: Duplicate entry '11' for key 'PRIMARY'
+[2026-02-05 09:43:34] POST exception: Duplicate entry '11' for key 'PRIMARY'

@@ -189,7 +189,7 @@ async function loadDisbursements() {
           ${ d.status === "Pending" ? `<button onclick="openReleaseModal(${d.id})" class="text-green-600 hover:text-green-800" title="Release"><i class="bx bx-check-circle text-xl"></i></button>` : "" }
           <button onclick="editDisbursement(${d.id})" class="text-blue-600 hover:text-blue-800" title="Edit"><i class="bx bx-edit-alt text-xl"></i></button>
           <button onclick="viewDisbursement(${d.id})" class="text-gray-600 hover:text-gray-800" title="View"><i class="bx bx-show text-xl"></i></button>
-          <button onclick="deleteDisbursement(${d.id})" class="text-red-600 hover:text-red-800" title="Delete"><i class="bx bx-trash text-xl"></i></button>
+          <button onclick="archiveDisbursement(${d.id})" class="text-orange-600 hover:text-orange-800" title="Archive"><i class="bx bx-archive text-xl"></i></button>
         </td>
       </tr>
     `).join("");
@@ -359,26 +359,25 @@ async function viewDisbursement(id) {
 }
 function closeViewModal() { viewModal.classList.add("hidden"); }
 
-// ================= DELETE =================
-async function deleteDisbursement(id) {
-  if (!confirm("Are you sure you want to delete this record?")) return;
+// ================= ARCHIVE =================
+async function archiveDisbursement(id) {
+  if (!confirm("Are you sure you want to archive this record? You can retrieve it later from the Archived section.")) return;
   try {
-    // send as x-www-form-urlencoded so PHP's parse_str() will pick it up
     const res = await fetch(apiUrl, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ id }).toString()
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "archive", id: id })
     });
     const result = await res.json();
     if (result.success) {
-      showToast("Disbursement deleted!", "success");
+      showToast("Disbursement archived successfully!", "success");
       loadDisbursements();
     } else {
       showToast("Error: " + result.error, "error");
     }
   } catch (err) {
-    console.error("deleteDisbursement error:", err);
-    showToast("Failed to delete record.", "error");
+    console.error("archiveDisbursement error:", err);
+    showToast("Failed to archive record.", "error");
   }
 }
 

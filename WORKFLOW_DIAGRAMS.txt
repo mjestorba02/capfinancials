@@ -1,0 +1,403 @@
+================================================================================
+                    DISBURSEMENT ARCHIVE SYSTEM
+                        VISUAL FLOW DIAGRAMS
+================================================================================
+
+SYSTEM ARCHITECTURE
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         USER INTERFACE (Frontend)                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  SIDEBAR NAVIGATION:                                                        │
+│  ┌──────────────────────────┐                                              │
+│  │ • Dashboard              │                                              │
+│  │ • Collections            │                                              │
+│  │ • Budget Management      │                                              │
+│  │ • General Ledger         │                                              │
+│  │ • Accounts Payable       │                                              │
+│  │ • Accounts Receivable    │                                              │
+│  │ ► DISBURSEMENT      ◄────┼─ Points to disbursement.php                 │
+│  │ ► ARCHIVED DISBURSEMENTS ◄─ Points to archived_disbursement.php (NEW) │
+│  │ • Logout                 │                                              │
+│  └──────────────────────────┘                                              │
+│                                                                              │
+│  PAGE 1: DISBURSEMENT.PHP                                                   │
+│  ┌──────────────────────────────────────────────┐                         │
+│  │ Disbursements                                │                         │
+│  │ ┌────────────────────────────────────────┐   │                         │
+│  │ │ VCH-001 | Maria  | Supplies | ₱5000  │ ◄─┼─ Release/Edit/View/   │
+│  │ │ VCH-002 | Josh   | Supplies | ₱4000  │ ◄─┼─ ARCHIVE (NEW!) ✅     │
+│  │ │ VCH-003 | LOVE   | Salaries | ₱1000  │   │                         │
+│  │ └────────────────────────────────────────┘   │                         │
+│  └──────────────────────────────────────────────┘                         │
+│                 ▼ Archive button                                           │
+│                                                                              │
+│  PAGE 2: ARCHIVED_DISBURSEMENT.PHP (NEW!)                                   │
+│  ┌──────────────────────────────────────────────┐                         │
+│  │ Archived Disbursements                       │                         │
+│  │ ┌────────────────────────────────────────┐   │                         │
+│  │ │ VCH-002 | Josh | ... | Arch date      │ ◄─┼─ View/RETRIEVE/DELETE │
+│  │ │ VCH-003 | LOVE | ... | Arch date      │   │                         │
+│  │ └────────────────────────────────────────┘   │                         │
+│  │  ▼ Retrieve button                           │                         │
+│  └──────────────────────────────────────────────┘                         │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+DATABASE LAYER (Backend)
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          DATABASE TABLES                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  TABLE: DISBURSEMENTS (ACTIVE)                                              │
+│  ┌────────────────────────────────────────────────────────────────┐        │
+│  │ id | voucher_no | vendor | category | amount | status | ...    │        │
+│  ├────────────────────────────────────────────────────────────────┤        │
+│  │ 1  | VCH-001    | Maria | Supplies | 5000   | Released         │        │
+│  │ 2  | VCH-002    | Josh  | Supplies | 4000   | Released         │        │
+│  │ 3  | VCH-003    | LOVE  | Salaries | 1000   | Released         │        │
+│  └────────────────────────────────────────────────────────────────┘        │
+│         ▲                                ▲                                  │
+│         │ is_archived=0 (normal)         │                                  │
+│         │ archived_at=NULL               │                                  │
+│         │                                │                                  │
+│         │ NEW COLUMNS ADDED ✅           │                                  │
+│         └────────────────────────────────┘                                  │
+│                                                                              │
+│                                                                              │
+│  TABLE: ARCHIVED_DISBURSEMENTS (NEW!) ✨                                    │
+│  ┌────────────────────────────────────────────────────────────────┐        │
+│  │ id | voucher_no | vendor | ... | archived_at | archived_by     │        │
+│  ├────────────────────────────────────────────────────────────────┤        │
+│  │    |            |        |     |             |                 │        │
+│  │ 2  | VCH-002    | Josh   | ... | 2026-02-05  | admin_user      │        │
+│  │ 3  | VCH-003    | LOVE   | ... | 2026-02-05  | admin_user      │        │
+│  │    |            |        |     |             |                 │        │
+│  └────────────────────────────────────────────────────────────────┘        │
+│  ▲                                                                          │
+│  │ Records moved here when archived                                        │
+│  │ Can be retrieved or permanently deleted                                 │
+│  │                                                                          │
+│  └─────────────────────────────────────────────────────────────────────────┘
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+API LAYER (Controllers)
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         API ENDPOINTS                                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  /api/disbursements_api.php (MODIFIED)                                      │
+│  ├─ GET   → Fetch active disbursements                                      │
+│  ├─ POST  → Create new disbursement                                         │
+│  ├─ PUT   → Update disbursement                                             │
+│  └─ POST (action=archive) → ARCHIVE DISBURSEMENT ✅ NEW                    │
+│         │                                                                   │
+│         ▼ Triggers:                                                         │
+│         • Copy record to archived_disbursements table                       │
+│         • Mark original as is_archived=1                                    │
+│         • Create notification                                               │
+│         • Return success                                                    │
+│                                                                              │
+│  /api/archived_disbursements_api.php (NEW!) ✨                              │
+│  ├─ GET                    → Fetch all archived disbursements               │
+│  ├─ GET (id=X)            → Fetch single archived disbursement             │
+│  ├─ POST (action=retrieve) → RETRIEVE FROM ARCHIVE                         │
+│  │         │                                                                │
+│  │         ▼ Triggers:                                                      │
+│  │         • Re-insert to disbursements table                               │
+│  │         • Set is_archived=0                                              │
+│  │         • Create notification                                            │
+│  │         • Return success                                                 │
+│  │                                                                          │
+│  └─ DELETE                 → PERMANENTLY DELETE                             │
+│           │                                                                 │
+│           ▼ Triggers:                                                       │
+│           • Delete from archived_disbursements                              │
+│           • Cannot be undone                                                │
+│           • Create notification                                             │
+│           • Return success                                                  │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+USER WORKFLOW DIAGRAMS
+═══════════════════════════════════════════════════════════════════════════════
+
+SCENARIO 1: ARCHIVE A DISBURSEMENT
+────────────────────────────────────
+
+      User on Disbursement Page
+               │
+               ▼
+      ┌─────────────────┐
+      │ VCH-002 Record  │
+      └────────┬────────┘
+               │
+               ▼
+      Click Archive Button 📦
+               │
+               ▼
+      ┌─────────────────────────────────┐
+      │ Confirmation Modal:              │
+      │ "Archive this record?"           │
+      │ [Cancel] [Confirm]               │
+      └─────────────┬───────────────────┘
+                    │
+                    ▼
+      POST /api/disbursements_api.php
+      { action: "archive", id: 2 }
+                    │
+                    ▼
+      ┌─────────────────────────────────┐
+      │ Server Processing:              │
+      │ 1. Copy VCH-002 to archive tbl  │
+      │ 2. Mark is_archived=1           │
+      │ 3. Create notification          │
+      └─────────────┬───────────────────┘
+                    │
+                    ▼
+      ✅ Success Response
+               │
+               ▼
+      Toast: "Archived successfully!"
+               │
+               ▼
+      VCH-002 disappears from
+      Disbursement list
+               │
+               ▼
+      Appears in Archived Disbursements page
+               │
+               ▼
+      ✅ COMPLETE
+
+
+SCENARIO 2: RETRIEVE FROM ARCHIVE
+──────────────────────────────────
+
+      User on Archived Disbursements Page
+               │
+               ▼
+      ┌─────────────────┐
+      │ VCH-002 Record  │
+      │ (archived)      │
+      └────────┬────────┘
+               │
+               ▼
+      Click Retrieve Button ↩️
+               │
+               ▼
+      ┌─────────────────────────────────┐
+      │ Confirmation Modal:              │
+      │ "Restore this record?"           │
+      │ [Cancel] [Confirm]               │
+      └─────────────┬───────────────────┘
+                    │
+                    ▼
+      POST /api/archived_disbursements_api.php
+      { action: "retrieve", id: 2 }
+                    │
+                    ▼
+      ┌─────────────────────────────────┐
+      │ Server Processing:              │
+      │ 1. Re-insert VCH-002 to active  │
+      │ 2. Mark is_archived=0           │
+      │ 3. Create notification          │
+      └─────────────┬───────────────────┘
+                    │
+                    ▼
+      ✅ Success Response
+               │
+               ▼
+      Toast: "Retrieved successfully!"
+               │
+               ▼
+      VCH-002 reappears in
+      Disbursement list
+               │
+               ▼
+      Removed from Archived Disbursements
+               │
+               ▼
+      ✅ COMPLETE
+
+
+SCENARIO 3: PERMANENT DELETE
+─────────────────────────────
+
+      User on Archived Disbursements Page
+               │
+               ▼
+      ┌─────────────────┐
+      │ VCH-002 Record  │
+      │ (archived)      │
+      └────────┬────────┘
+               │
+               ▼
+      Click Delete Button 🗑️
+               │
+               ▼
+      ┌────────────────────────────────────┐
+      │ WARNING Modal:                      │
+      │ ⚠️ "Permanently delete?"            │
+      │ "This cannot be undone!"            │
+      │ [Cancel] [Delete Permanently]       │
+      └────────────────┬───────────────────┘
+                       │
+                       ▼
+      DELETE /api/archived_disbursements_api.php
+      { id: 2 }
+                       │
+                       ▼
+      ┌────────────────────────────────────┐
+      │ Server Processing:                 │
+      │ 1. Delete VCH-002 from archive     │
+      │ 2. No recovery possible ⚠️          │
+      │ 3. Create notification             │
+      └────────────────┬───────────────────┘
+                       │
+                       ▼
+      ✅ Success Response
+               │
+               ▼
+      Toast: "Permanently deleted!"
+               │
+               ▼
+      VCH-002 completely removed
+      No longer in any table
+               │
+               ▼
+      ✅ COMPLETE (No Recovery)
+
+
+DATA TRANSFORMATION DIAGRAM
+═══════════════════════════════════════════════════════════════════════════════
+
+BEFORE (Old System):
+                DELETE
+                  │
+    disbursements │
+    ├─ VCH-001    │     PERMANENTLY GONE ❌
+    ├─ VCH-002 ◄──┤     No recovery possible
+    └─ VCH-003    │
+                  ▼
+
+AFTER (New System):
+                ARCHIVE
+                  │
+    disbursements │    archived_disbursements
+    ├─ VCH-001    │    ├─ VCH-002 (copied)
+    ├─ VCH-003    │◄──►│ Timestamp recorded
+    │             │    │ User tracked
+    └─ (Active)   │    │
+                  │    └─ Can RETRIEVE ↩️ or DELETE 🗑️
+                MARKED is_archived=1
+
+
+STATE MACHINE (Record Lifecycle)
+═════════════════════════════════════════════════════════════════════════════════
+
+        ┌──────────────┐
+        │ ACTIVE STATE │  (is_archived=0, in disbursements table)
+        │              │
+        └───────┬──────┘
+                │
+         User clicks ARCHIVE
+                │
+                ▼
+        ┌──────────────────┐
+        │ ARCHIVED STATE   │  (in archived_disbursements table)
+        │                  │  (is_archived=1 in disbursements)
+        └──┬───────────┬───┘
+           │           │
+      RETRIEVE    PERMANENT DELETE
+           │           │
+           ▼           ▼
+    Back to ACTIVE   ❌ GONE FOREVER
+    (Restored)       (Irreversible)
+
+
+DATA FLOW SUMMARY
+═════════════════════════════════════════════════════════════════════════════════
+
+ACTIVE DISBURSEMENTS          ARCHIVE OPERATION          ARCHIVED DISBURSEMENTS
+┌──────────────────────┐                               ┌──────────────────────┐
+│ VCH-001 (Active)     │                               │ (Empty initially)    │
+│ VCH-002 (Active) ◄───┼──────────────────────────────►│ VCH-002 (Archived)   │
+│ VCH-003 (Active)     │        Copy + Mark            │ Date: 2026-02-05     │
+│                      │   is_archived = 1             │ By: admin_user       │
+│                      │                               │                      │
+│ Status: Ready        │                               │ Status: Archived     │
+└──────────────────────┘                               │                      │
+           ▲                        RETRIEVE OPERATION │                      │
+           │                      ◄──────────────────► │                      │
+           │                      Re-insert + Restore  │                      │
+           └──────────────────────────────────────────►│                      │
+                                                       │                      │
+                                    PERMANENT DELETE   │ VCH-002 (To Delete)  │
+                                       ────────────►   │ ▼ [DELETE] ───────► ❌
+                                       Gone Forever    │                      │
+                                       No Recovery     │                      │
+                                                       └──────────────────────┘
+
+
+NOTIFICATION FLOW
+═════════════════════════════════════════════════════════════════════════════════
+
+    User Action              API Response              Notification Created
+    ─────────────            ────────────              ────────────────────
+
+    Archive VCH-002   ──►   Success ✅        ──►    "VCH-002 archived"
+                                                     Time: 2026-02-05 10:30
+                                                     User: admin_user
+
+    Retrieve VCH-002  ──►   Success ✅        ──►    "VCH-002 retrieved"
+                                                     Time: 2026-02-05 11:00
+                                                     User: admin_user
+
+    Delete VCH-002    ──►   Success ✅        ──►    "VCH-002 permanently deleted"
+                                                     Time: 2026-02-05 11:15
+                                                     User: admin_user
+
+
+INTEGRATION POINTS
+═════════════════════════════════════════════════════════════════════════════════
+
+                         ┌─────────────────────┐
+                         │  Notifications      │
+                         │  (notifications tbl)│
+                         └────────────┬────────┘
+                                      ▲
+                                      │ Creates
+                                      │
+        ┌─────────────────────────────┼─────────────────────────────┐
+        │                             │                             │
+        │                             │                             │
+   ┌────┴────┐              ┌─────────┴──────┐           ┌──────────┴────┐
+   │Archive  │              │  Retrieve      │           │  Permanent    │
+   │Action   │              │  Action        │           │  Delete       │
+   └────┬────┘              └─────────┬──────┘           └──────────┬────┘
+        │                             │                             │
+        │                             │                             │
+   ┌────▼─────────────────────────────▼─────────────────────────────▼────┐
+   │                                                                       │
+   │  Database Operations:                                               │
+   │  • Insert to archived_disbursements                                 │
+   │  • Update disbursements (is_archived flag)                          │
+   │  • Insert to notifications                                          │
+   │                                                                       │
+   └───────────────────────────────────────────────────────────────────────┘
+
+
+================================================================================
+                            END OF DIAGRAMS
+================================================================================
