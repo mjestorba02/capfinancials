@@ -25,7 +25,7 @@ function generatePaymentId($conn) {
 }
 
 function getPaymentById($conn, $id) {
-    $stmt = $conn->prepare("SELECT id, payment_id, vendor, payment_date, amount, status FROM payments WHERE id = ? LIMIT 1");
+    $stmt = $conn->prepare("SELECT id, payment_id, vendor, payment_date, mode_of_payment, release_date, amount, received_by, status FROM payments WHERE id = ? LIMIT 1");
     if (!$stmt) return null;
     $stmt->bind_param("i", $id);
     if (!$stmt->execute()) return null;
@@ -50,11 +50,14 @@ switch ($method) {
         $payment_id = generatePaymentId($conn);
         $vendor = $data['vendor'];
         $payment_date = $data['payment_date'];
+        $mode_of_payment = $data['mode_of_payment'];
+        $release_date = $data['release_date'];
         $amount = $data['amount'];
+        $received_by = $data['received_by'];
         $status = $data['status'];
 
-        $stmt = $conn->prepare("INSERT INTO payments (payment_id, vendor, payment_date, amount, status) VALUES (?, ?, ?, ?, ?)");
-        $stmt->bind_param("sssds", $payment_id, $vendor, $payment_date, $amount, $status);
+        $stmt = $conn->prepare("INSERT INTO payments (payment_id, vendor, payment_date, mode_of_payment, release_date, amount, received_by, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("sssssdss", $payment_id, $vendor, $payment_date, $mode_of_payment, $release_date, $amount, $received_by, $status);
 
         if ($stmt->execute()) {
             echo json_encode(["success" => true, "payment_id" => $payment_id]);
@@ -98,10 +101,25 @@ switch ($method) {
             $params[] = $data['payment_date'];
             $types .= "s";
         }
+        if (isset($data['mode_of_payment'])) {
+            $fields[] = "mode_of_payment=?";
+            $params[] = $data['mode_of_payment'];
+            $types .= "s";
+        }
+        if (isset($data['release_date'])) {
+            $fields[] = "release_date=?";
+            $params[] = $data['release_date'];
+            $types .= "s";
+        }
         if (isset($data['amount'])) {
             $fields[] = "amount=?";
             $params[] = floatval($data['amount']);
             $types .= "d";
+        }
+        if (isset($data['received_by'])) {
+            $fields[] = "received_by=?";
+            $params[] = $data['received_by'];
+            $types .= "s";
         }
         if (isset($data['status'])) {
             $fields[] = "status=?";

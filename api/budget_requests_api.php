@@ -53,12 +53,18 @@ switch ($method) {
         $department = $conn->real_escape_string($data['department']);
         $purpose = $conn->real_escape_string($data['purpose']);
         $amount = $conn->real_escape_string($data['amount']);
-        $amount_limit = isset($data['amount_limit']) ? $conn->real_escape_string($data['amount_limit']) : null;
         $attendance_required = isset($data['attendance_required']) ? $conn->real_escape_string($data['attendance_required']) : 'No';
         $item_list = isset($data['item_list']) ? $conn->real_escape_string($data['item_list']) : null;
         $approval_required = isset($data['approval_required']) ? $conn->real_escape_string($data['approval_required']) : 'No';
         $requesting_account = isset($data['requesting_account']) ? $conn->real_escape_string($data['requesting_account']) : null;
         $approval_account = isset($data['approval_account']) ? $conn->real_escape_string($data['approval_account']) : null;
+
+        // Validate amount does not exceed 100,000
+        if (floatval($amount) > 100000) {
+            error_log("[budget_requests_api.php ERROR] Amount exceeds maximum limit of 100,000");
+            echo json_encode(["success" => false, "error" => "Amount cannot exceed ₱100,000"]);
+            exit;
+        }
 
         // Get the highest numeric part from existing request_id (e.g. REQ-001 → 1)
         $result = $conn->query("SELECT MAX(CAST(SUBSTRING(request_id, 5) AS UNSIGNED)) AS last_number FROM budget_requests");
@@ -77,9 +83,9 @@ switch ($method) {
         // Format as REQ-001, REQ-002, etc.
         $request_id = "REQ-" . str_pad($nextNumber, 3, "0", STR_PAD_LEFT);
 
-        // Use prepared statement for safer insert including new fields
-        $stmt = $conn->prepare("INSERT INTO budget_requests (request_id, department, purpose, amount, amount_limit, attendance_required, item_list, approval_required, requesting_account, approval_account) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param('sssddsssss', $request_id, $department, $purpose, $amount, $amount_limit, $attendance_required, $item_list, $approval_required, $requesting_account, $approval_account);
+        // Use prepared statement for safer insert
+        $stmt = $conn->prepare("INSERT INTO budget_requests (request_id, department, purpose, amount, attendance_required, item_list, approval_required, requesting_account, approval_account) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param('ssdsssss', $request_id, $department, $purpose, $amount, $attendance_required, $item_list, $approval_required, $requesting_account, $approval_account);
         error_log("[budget_requests_api.php DEBUG] Executing prepared insert for $request_id");
 
         if ($stmt->execute()) {
@@ -102,7 +108,6 @@ switch ($method) {
         $purpose = $conn->real_escape_string($data['purpose']);
         $amount = $conn->real_escape_string($data['amount']);
         $status = $conn->real_escape_string($data['status']);
-        $amount_limit = isset($data['amount_limit']) ? $conn->real_escape_string($data['amount_limit']) : null;
         $attendance_required = isset($data['attendance_required']) ? $conn->real_escape_string($data['attendance_required']) : 'No';
         $item_list = isset($data['item_list']) ? $conn->real_escape_string($data['item_list']) : null;
         $approval_required = isset($data['approval_required']) ? $conn->real_escape_string($data['approval_required']) : 'No';
@@ -133,8 +138,8 @@ switch ($method) {
         }
 
         // Use prepared statement to update
-        $stmt = $conn->prepare("UPDATE budget_requests SET department=?, purpose=?, amount=?, amount_limit=?, attendance_required=?, item_list=?, approval_required=?, requesting_account=?, approval_account=?, status=? WHERE id=?");
-        $stmt->bind_param('ssddssssssi', $department, $purpose, $amount, $amount_limit, $attendance_required, $item_list, $approval_required, $requesting_account, $approval_account, $status, $id);
+        $stmt = $conn->prepare("UPDATE budget_requests SET department=?, purpose=?, amount=?, attendance_required=?, item_list=?, approval_required=?, requesting_account=?, approval_account=?, status=? WHERE id=?");
+        $stmt->bind_param('sdssssssi', $department, $purpose, $amount, $attendance_required, $item_list, $approval_required, $requesting_account, $approval_account, $status, $id);
         error_log("[budget_requests_api.php DEBUG] Executing prepared update for ID: $id");
 
         if ($stmt->execute()) {

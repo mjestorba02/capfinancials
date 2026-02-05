@@ -60,8 +60,8 @@ $children = '
 </div>
 
 <!-- Add/Edit Disbursement Modal -->
-<div id="disbursementModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-  <div class="bg-white rounded-xl p-6 w-full max-w-lg shadow-lg">
+<div id="disbursementModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-xl p-6 w-full max-w-lg max-h-screen overflow-y-auto shadow-lg">
     <h2 id="modalTitle" class="text-xl font-semibold mb-4">Add New Disbursement</h2>
     <form id="disbursementForm" class="space-y-4">
       <input type="hidden" id="disbursementId">
@@ -113,8 +113,8 @@ $children = '
 </div>
 
 <!-- View Modal -->
-<div id="viewModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-  <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-lg">
+<div id="viewModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-xl p-6 w-full max-w-md max-h-screen overflow-y-auto shadow-lg">
     <h2 class="text-xl font-semibold mb-4">Disbursement Details</h2>
     <div id="viewContent" class="space-y-2 text-sm"></div>
     <div class="flex justify-end mt-4">
@@ -124,8 +124,8 @@ $children = '
 </div>
 
 <!-- Release Confirmation Modal -->
-<div id="releaseModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-  <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-lg">
+<div id="releaseModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-xl p-6 w-full max-w-md max-h-screen overflow-y-auto shadow-lg">
     <h2 class="text-xl font-semibold mb-4">Confirm Release</h2>
     <p class="text-sm text-slate-600 mb-6">
       Are you sure you want to mark this disbursement as <span class="font-semibold text-green-600">Released</span>?

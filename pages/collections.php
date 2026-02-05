@@ -60,8 +60,8 @@ $children = '
 </div>
 
 <!-- Add Collection Modal -->
-<div id="addCollectionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-  <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 relative">
+<div id="addCollectionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-lg max-h-screen overflow-y-auto p-6 relative">
     <h2 class="text-xl font-bold mb-4">Add New Collection</h2>
     <form id="addForm" class="space-y-4">
       <div>
@@ -93,8 +93,8 @@ $children = '
 </div>
 
 <!-- View Collection Modal -->
-<div id="viewCollectionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-  <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 relative">
+<div id="viewCollectionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md max-h-screen overflow-y-auto p-6 relative">
     <h2 class="text-xl font-bold mb-4">Collection Details</h2>
     <div id="viewDetails" class="space-y-2 text-sm"></div>
     <div class="flex justify-end mt-6">
@@ -104,8 +104,8 @@ $children = '
 </div>
 
 <!-- Approve Confirmation Modal -->
-<div id="approveModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-  <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+<div id="approveModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md max-h-screen overflow-y-auto p-6 relative">
     <h2 class="text-xl font-bold mb-4">Confirm Approval</h2>
     <p class="text-sm text-slate-600">Are you sure you want to mark collection <span id="approveInvoice" class="font-medium"></span> as <span class="font-semibold">Paid</span>?</p>
     <div class="flex justify-end gap-3 mt-6">

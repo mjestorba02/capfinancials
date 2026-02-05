@@ -3,77 +3,50 @@ include '../layout/adminLayout.php';
 
 $children = '
 <!-- Main -->
-<main class="flex-1 p-8 overflow-y-auto">
+<main class="flex-1 p-8 overflow-y-auto max-h-screen">
   <!-- Header -->
   <div class="flex justify-between items-center mb-8">
     <div>
       <h1 class="text-2xl font-bold">Chart of Accounts</h1>
-      <p class="text-sm text-slate-500">Manage your financial accounts overview</p>
+      <p class="text-sm text-slate-500">Manage financial account records and categories.</p>
     </div>
-    <button onclick="openAddModal()" class="bg-orange-500 hover:bg-orange-600 text-white text-sm px-4 py-2 rounded-lg shadow">
+    <button onclick="openAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg shadow">
       + Add Account
     </button>
   </div>
 
-  <!-- Summary Cards -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-    <div class="bg-white p-6 rounded-xl shadow border border-slate-200">
-      <h3 class="text-sm font-medium text-slate-600">Total Assets</h3>
-      <p id="totalAssets" class="text-2xl font-bold text-green-600 mt-2">₱0</p>
-    </div>
-    <div class="bg-white p-6 rounded-xl shadow border border-slate-200">
-      <h3 class="text-sm font-medium text-slate-600">Total Liabilities</h3>
-      <p id="totalLiabilities" class="text-2xl font-bold text-red-600 mt-2">₱0</p>
-    </div>
-    <div class="bg-white p-6 rounded-xl shadow border border-slate-200">
-      <h3 class="text-sm font-medium text-slate-600">Owner\'s Equity</h3>
-      <p id="totalEquity" class="text-2xl font-bold text-blue-600 mt-2">₱0</p>
-    </div>
-  </div>
-
-  <!-- Charts Section -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <!-- Account Distribution Chart -->
-    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow">
-      <h3 class="text-lg font-semibold mb-4">Account Distribution</h3>
-      <canvas id="accountDistributionChart" class="w-full" height="250"></canvas>
-    </div>
-    
-    <!-- Account Type Breakdown Chart -->
-    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow">
-      <h3 class="text-lg font-semibold mb-4">Account Type Breakdown</h3>
-      <canvas id="accountTypeChart" class="w-full" height="250"></canvas>
+  <!-- Summary Section -->
+  <div class="bg-white p-6 rounded-xl border border-slate-200 shadow mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <div>
+        <p class="text-sm text-slate-600 font-medium">Total Assets</p>
+        <p id="totalAssets" class="text-2xl font-bold text-green-600 mt-2">₱0.00</p>
+      </div>
+      <div>
+        <p class="text-sm text-slate-600 font-medium">Total Liabilities</p>
+        <p id="totalLiabilities" class="text-2xl font-bold text-red-600 mt-2">₱0.00</p>
+      </div>
+      <div>
+        <p class="text-sm text-slate-600 font-medium">Total Equity</p>
+        <p id="totalEquity" class="text-2xl font-bold text-blue-600 mt-2">₱0.00</p>
+      </div>
     </div>
   </div>
 
   <!-- Accounts Table -->
   <div class="bg-white p-6 rounded-xl border border-slate-200 shadow">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="text-lg font-semibold">Accounts List</h3>
-      <div class="flex items-center gap-3">
-        <!-- Filter by Account Type -->
-        <select id="filterType" onchange="filterAccounts()" class="border px-3 py-2 rounded-lg text-sm">
-          <option value="all">All Types</option>
-          <option value="Asset">Asset</option>
-          <option value="Liability">Liability</option>
-          <option value="OwnersEquity">Equity</option>
-          <option value="Revenue">Revenue</option>
-          <option value="Expense">Expense</option>
-        </select>
-        
-      </div>
-    </div>
-
+    <h3 class="text-lg font-semibold mb-4">List of Accounts</h3>
     <div class="overflow-x-auto">
-      <table id="accountsTable" class="min-w-full text-sm border border-slate-200 rounded-lg overflow-hidden">
+      <table id="accountsTable" class="min-w-full text-sm border-collapse">
         <thead>
-          <tr class="bg-slate-100 text-left text-slate-600 uppercase text-xs">
-            <th class="px-4 py-3">Account Code</th>
-            <th class="px-4 py-3">Account Name</th>
-            <th class="px-4 py-3">Account Type</th>
-            <th class="px-4 py-3">Category</th>
-            <th class="px-4 py-3">Description</th>
-            <th class="px-4 py-3 text-right">Actions</th>
+          <tr class="bg-slate-100 text-left text-slate-600 uppercase text-xs font-semibold">
+            <th class="px-4 py-3 border border-slate-200">#</th>
+            <th class="px-4 py-3 border border-slate-200">Account Code</th>
+            <th class="px-4 py-3 border border-slate-200">Account Name</th>
+            <th class="px-4 py-3 border border-slate-200">Account Type</th>
+            <th class="px-4 py-3 border border-slate-200">Category</th>
+            <th class="px-4 py-3 border border-slate-200">Description</th>
+            <th class="px-4 py-3 border border-slate-200 text-center">Action</th>
           </tr>
         </thead>
         <tbody id="accountsBody" class="divide-y divide-slate-200">
@@ -85,21 +58,22 @@ $children = '
 </main>
 
 <!-- Add Modal -->
-<div id="addModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-  <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+<div id="addModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md max-h-screen overflow-y-auto p-6 relative">
     <h2 class="text-xl font-bold mb-4">Add New Account</h2>
-    <form id="addAccountForm">
-      <div class="mb-4">
+    <form id="addAccountForm" class="space-y-4">
+      <div>
         <label class="block text-sm font-medium text-slate-600">Account Code</label>
-        <input type="text" name="account_code" required class="mt-1 w-full border rounded-lg px-3 py-2">
+        <input type="text" name="account_code" required class="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
-      <div class="mb-4">
+      <div>
         <label class="block text-sm font-medium text-slate-600">Account Name</label>
-        <input type="text" name="account_name" required class="mt-1 w-full border rounded-lg px-3 py-2">
+        <input type="text" name="account_name" required class="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
-      <div class="mb-4">
+      <div>
         <label class="block text-sm font-medium text-slate-600">Account Type</label>
-        <select name="account_type" required class="mt-1 w-full border rounded-lg px-3 py-2">
+        <select name="account_type" required class="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">-- Select --</option>
           <option value="Asset">Asset</option>
           <option value="Liability">Liability</option>
           <option value="Equity">Equity</option>
@@ -108,53 +82,54 @@ $children = '
           <option value="Income">Income</option>
         </select>
       </div>
-      <div class="mb-4">
+      <div>
         <label class="block text-sm font-medium text-slate-600">Category</label>
-        <select name="category" required class="mt-1 w-full border rounded-lg px-3 py-2">
+        <select name="category" required class="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">-- Select --</option>
           <option value="Current Asset">Current Asset</option>
           <option value="Fixed Asset">Fixed Asset</option>
           <option value="Current Liability">Current Liability</option>
-          <option value="Long-term Liability">Long-term Liability</option>
+          <option value="Long-Term Liability">Long-Term Liability</option>
           <option value="Owner\'s Equity">Owner\'s Equity</option>
-          <option value="Revenue">Revenue</option>
-          <option value="COGS">COGS</option>
+          <option value="Operating Revenue">Operating Revenue</option>
           <option value="Operating Expense">Operating Expense</option>
+          <option value="COGS">COGS</option>
           <option value="Non-operating Expense">Non-operating Expense</option>
         </select>
       </div>
-      <div class="mb-4">
+      <div>
         <label class="block text-sm font-medium text-slate-600">Description</label>
-        <textarea name="description" rows="3" class="mt-1 w-full border rounded-lg px-3 py-2"></textarea>
+        <textarea name="description" rows="2" class="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
       </div>
-      <div class="mb-4">
+      <div>
         <label class="block text-sm font-medium text-slate-600">Balance</label>
-        <input type="number" step="0.01" name="balance" class="mt-1 w-full border rounded-lg px-3 py-2" placeholder="0.00" />
+        <input type="number" step="0.01" name="balance" class="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="0.00" value="0.00">
       </div>
-      <div class="flex justify-end space-x-2">
-        <button type="button" onclick="closeAddModal()" class="px-4 py-2 rounded-lg border">Cancel</button>
-        <button type="submit" class="px-4 py-2 bg-orange-500 text-white rounded-lg">Save</button>
+      <div class="flex justify-end space-x-2 pt-4">
+        <button type="button" onclick="closeAddModal()" class="px-4 py-2 text-sm bg-slate-200 hover:bg-slate-300 rounded-lg">Cancel</button>
+        <button type="submit" class="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Save</button>
       </div>
     </form>
   </div>
 </div>
 
 <!-- Edit Modal -->
-<div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-  <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+<div id="editModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md max-h-screen overflow-y-auto p-6 relative">
     <h2 class="text-xl font-bold mb-4">Edit Account</h2>
-    <form id="editAccountForm">
+    <form id="editAccountForm" class="space-y-4">
       <input type="hidden" name="id">
-      <div class="mb-4">
+      <div>
         <label class="block text-sm font-medium text-slate-600">Account Code</label>
-        <input type="text" name="account_code" required class="mt-1 w-full border rounded-lg px-3 py-2">
+        <input type="text" name="account_code" required class="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
-      <div class="mb-4">
+      <div>
         <label class="block text-sm font-medium text-slate-600">Account Name</label>
-        <input type="text" name="account_name" required class="mt-1 w-full border rounded-lg px-3 py-2">
+        <input type="text" name="account_name" required class="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
-      <div class="mb-4">
+      <div>
         <label class="block text-sm font-medium text-slate-600">Account Type</label>
-        <select name="account_type" required class="mt-1 w-full border rounded-lg px-3 py-2">
+        <select name="account_type" required class="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option value="Asset">Asset</option>
           <option value="Liability">Liability</option>
           <option value="Equity">Equity</option>
@@ -163,55 +138,44 @@ $children = '
           <option value="Income">Income</option>
         </select>
       </div>
-      <div class="mb-4">
+      <div>
         <label class="block text-sm font-medium text-slate-600">Category</label>
-        <select name="category" required class="mt-1 w-full border rounded-lg px-3 py-2">
+        <select name="category" required class="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option value="Current Asset">Current Asset</option>
           <option value="Fixed Asset">Fixed Asset</option>
           <option value="Current Liability">Current Liability</option>
-          <option value="Long-term Liability">Long-term Liability</option>
+          <option value="Long-Term Liability">Long-Term Liability</option>
           <option value="Owner\'s Equity">Owner\'s Equity</option>
-          <option value="Revenue">Revenue</option>
-          <option value="COGS">COGS</option>
+          <option value="Operating Revenue">Operating Revenue</option>
           <option value="Operating Expense">Operating Expense</option>
+          <option value="COGS">COGS</option>
           <option value="Non-operating Expense">Non-operating Expense</option>
         </select>
       </div>
-      <div class="mb-4">
+      <div>
         <label class="block text-sm font-medium text-slate-600">Description</label>
-        <textarea name="description" rows="3" class="mt-1 w-full border rounded-lg px-3 py-2"></textarea>
+        <textarea name="description" rows="2" class="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
       </div>
-      <div class="mb-4">
+      <div>
         <label class="block text-sm font-medium text-slate-600">Balance</label>
-        <input type="number" step="0.01" name="balance" class="mt-1 w-full border rounded-lg px-3 py-2" placeholder="0.00" />
+        <input type="number" step="0.01" name="balance" class="mt-1 w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="0.00">
       </div>
-      <div class="flex justify-end space-x-2">
-        <button type="button" onclick="closeEditModal()" class="px-4 py-2 rounded-lg border">Cancel</button>
-        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg">Update</button>
+      <div class="flex justify-end space-x-2 pt-4">
+        <button type="button" onclick="closeEditModal()" class="px-4 py-2 text-sm bg-slate-200 hover:bg-slate-300 rounded-lg">Cancel</button>
+        <button type="submit" class="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Update</button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- View Modal -->
-<div id="viewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-  <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
-    <h2 class="text-xl font-bold mb-4">Account Details</h2>
-    <div id="viewContent" class="space-y-2 text-sm"></div>
-    <div class="flex justify-end mt-4">
-      <button onclick="closeViewModal()" class="px-4 py-2 rounded-lg border">Close</button>
-    </div>
-  </div>
-</div>
-
 <!-- Delete Modal -->
-<div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-  <div class="bg-white rounded-lg shadow-lg w-full max-w-sm p-6 relative">
+<div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md max-h-screen overflow-y-auto p-6 relative">
     <h2 class="text-lg font-bold mb-4 text-red-600">Delete Account</h2>
     <p id="deleteMessage" class="text-sm text-slate-600 mb-6">Are you sure you want to delete this account?</p>
     <div class="flex justify-end space-x-2">
-      <button onclick="closeDeleteModal()" class="px-4 py-2 rounded-lg border">Cancel</button>
-      <button onclick="deleteAccount()" class="px-4 py-2 bg-red-500 text-white rounded-lg">Delete</button>
+      <button onclick="closeDeleteModal()" class="px-4 py-2 text-sm bg-slate-200 hover:bg-slate-300 rounded-lg">Cancel</button>
+      <button onclick="deleteAccount()" class="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg">Delete</button>
     </div>
   </div>
 </div>
@@ -220,17 +184,16 @@ $children = '
 
 adminLayout($children);
 ?>
+
 <!-- Toastify -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
 
 <script>
   const API_URL = "http://localhost/financial2/api/chart_of_accounts_api.php";
 
-  // ===================== TOAST FUNCTION =====================
+  // Toast Function
   function showToast(message, type) {
     Toastify({
       text: message,
@@ -246,269 +209,191 @@ adminLayout($children);
 
   // Load Accounts
   async function loadAccounts() {
-    const res = await fetch(API_URL);
-    const data = await res.json();
+    try {
+      const res = await fetch(API_URL);
+      const data = await res.json();
 
-    const tbody = document.getElementById("accountsBody");
-    tbody.innerHTML = "";
+      const tbody = document.getElementById("accountsBody");
+      tbody.innerHTML = "";
 
-    let totalAssets = 0, totalLiabilities = 0, totalEquity = 0;
+      let totalAssets = 0, totalLiabilities = 0, totalEquity = 0;
+      let rowNum = 1;
 
-    data.forEach(acc => {
-      if (acc.category === "Asset") totalAssets += parseFloat(acc.balance || 0);
-      if (acc.category === "Liability") totalLiabilities += parseFloat(acc.balance || 0);
-      if (acc.category === "OwnersEquity") totalEquity += parseFloat(acc.balance || 0);
+      data.forEach(acc => {
+        // Calculate totals based on category
+        const cat = (acc.category || "").toLowerCase();
+        const bal = parseFloat(acc.balance || 0);
+        if (cat.includes("asset")) totalAssets += bal;
+        else if (cat.includes("liabil")) totalLiabilities += bal;
+        else if (cat.includes("equity")) totalEquity += bal;
 
-      tbody.innerHTML += `
-        <tr data-type="${acc.account_type || ''}" data-category="${acc.category}">
-          <td class="px-4 py-3 font-medium">${acc.account_code}</td>
-          <td class="px-4 py-3">${acc.account_name}</td>
-          <td class="px-4 py-3">${acc.account_type || ''}</td>
-          <td class="px-4 py-3">${acc.category}</td>
-          <td class="px-4 py-3">${acc.description || ''}</td>
-          <td class="px-4 py-3 text-right space-x-2">
-            <button onclick="editAccount(${acc.id})" class="text-blue-600 hover:text-blue-800"><i class="bx bx-edit"></i></button>
-            <button onclick="viewAccount(${acc.id})" class="text-gray-600 hover:text-gray-800"><i class="bx bx-show"></i></button>
-            <button onclick="confirmDelete(${acc.id})" class="text-red-600 hover:text-red-800"><i class="bx bx-trash"></i></button>
-          </td>
-        </tr>
-      `;
-    });
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="px-4 py-3 border border-slate-200 text-center text-slate-600">${rowNum}</td>
+            <td class="px-4 py-3 border border-slate-200 text-orange-600 font-semibold">${acc.account_code}</td>
+            <td class="px-4 py-3 border border-slate-200">${acc.account_name}</td>
+            <td class="px-4 py-3 border border-slate-200">${acc.account_type || ""}</td>
+            <td class="px-4 py-3 border border-slate-200">${acc.category}</td>
+            <td class="px-4 py-3 border border-slate-200">${acc.description || ""}</td>
+            <td class="px-4 py-3 border border-slate-200 text-center">
+              <button onclick="editAccount(${acc.id})" class="text-blue-600 hover:text-blue-800 transition" title="Edit">
+                <i class="bx bx-edit text-lg"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+        rowNum++;
+      });
 
-    // Map categories to summary totals (simple heuristic)
-    let assets = 0, liabilities = 0, equity = 0;
-    data.forEach(acc => {
-      const cat = (acc.category || '').toLowerCase();
-      const val = parseFloat(acc.balance || 0);
-      if (cat.includes('asset')) assets += val;
-      else if (cat.includes('liabil')) liabilities += val;
-      else if (cat === 'equity' || cat.includes('equity')) equity += val;
-    });
-
-    document.getElementById("totalAssets").innerText = "₱" + assets.toLocaleString();
-    document.getElementById("totalLiabilities").innerText = "₱" + liabilities.toLocaleString();
-    document.getElementById("totalEquity").innerText = "₱" + equity.toLocaleString();
-
-    // Render Charts
-    renderAccountDistributionChart(assets, liabilities, equity);
-    renderAccountTypeChart(data);
-  }
-
-  // Account Distribution Chart (Pie Chart)
-  let accountDistributionChart = null;
-  function renderAccountDistributionChart(assets, liabilities, equity) {
-    const ctx = document.getElementById("accountDistributionChart")?.getContext("2d");
-    if (!ctx) return;
-
-    if (accountDistributionChart) {
-      accountDistributionChart.destroy();
+      // Update totals
+      document.getElementById("totalAssets").innerText = "₱" + totalAssets.toLocaleString("en-PH", { minimumFractionDigits: 2 });
+      document.getElementById("totalLiabilities").innerText = "₱" + totalLiabilities.toLocaleString("en-PH", { minimumFractionDigits: 2 });
+      document.getElementById("totalEquity").innerText = "₱" + totalEquity.toLocaleString("en-PH", { minimumFractionDigits: 2 });
+    } catch (err) {
+      console.error("Error loading accounts:", err);
+      showToast("Failed to load accounts", "error");
     }
-
-    accountDistributionChart = new Chart(ctx, {
-      type: "doughnut",
-      data: {
-        labels: ["Assets", "Liabilities", "Equity"],
-        datasets: [{
-          data: [assets, liabilities, equity],
-          backgroundColor: ["#10b981", "#ef4444", "#3b82f6"],
-          borderColor: ["#059669", "#dc2626", "#1d4ed8"],
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: "bottom",
-            labels: { padding: 15 }
-          }
-        }
-      }
-    });
   }
 
-  // Account Type Breakdown Chart (Bar Chart)
-  let accountTypeChart = null;
-  function renderAccountTypeChart(data) {
-    const ctx = document.getElementById("accountTypeChart")?.getContext("2d");
-    if (!ctx) return;
-
-    // Count by account type
-    const typeCount = {};
-    data.forEach(acc => {
-      const type = acc.account_type || "Other";
-      typeCount[type] = (typeCount[type] || 0) + 1;
-    });
-
-    if (accountTypeChart) {
-      accountTypeChart.destroy();
-    }
-
-    accountTypeChart = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: Object.keys(typeCount),
-        datasets: [{
-          label: "Number of Accounts",
-          data: Object.values(typeCount),
-          backgroundColor: "#f59e0b",
-          borderColor: "#d97706",
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: true,
-            position: "top"
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { stepSize: 1 }
-          }
-        }
-      }
-    });
-  }
-
-  // Filter
-  function filterAccounts() {
-    const filterType = document.getElementById("filterType").value;
-    document.querySelectorAll("#accountsBody tr").forEach(row => {
-      const rowType = (row.getAttribute('data-type') || '').toLowerCase();
-      row.style.display = filterType === "all" || rowType === filterType.toLowerCase() ? "" : "none";
-    });
-  }
-
-  // ===================== ADD =====================
+  // Add Account
   document.getElementById("addAccountForm").addEventListener("submit", async function(e) {
     e.preventDefault();
     const formData = Object.fromEntries(new FormData(this).entries());
 
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData)
-    });
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      });
 
-    if (res.ok) {
-      showToast("Account added successfully!", "success");
-      closeAddModal();
-      this.reset();
-      loadAccounts();
-    } else {
-      showToast("Failed to add account", "error");
+      const result = await res.json();
+      if (result.success) {
+        showToast("Account added successfully!", "success");
+        closeAddModal();
+        this.reset();
+        loadAccounts();
+      } else {
+        showToast(result.message || "Failed to add account", "error");
+      }
+    } catch (err) {
+      console.error("Error adding account:", err);
+      showToast("Error adding account", "error");
     }
   });
 
-  // ===================== EDIT =====================
+  // Edit Account
   async function editAccount(id) {
-  const res = await fetch(`${API_URL}?id=${id}`);
-  const acc = await res.json();
+    try {
+      const res = await fetch(`${API_URL}?id=${id}`);
+      const acc = await res.json();
 
-  const form = document.getElementById("editAccountForm");
-  form.querySelector("input[name='id']").value = acc.id; // ✅ FIX
-  form.account_code.value = acc.account_code;
-  form.account_name.value = acc.account_name;
-  form.account_type.value = acc.account_type || acc.category || 'Asset';
-  form.category.value = acc.category;
-  form.description.value = acc.description || '';
-  form.balance.value = acc.balance || 0;
+      const form = document.getElementById("editAccountForm");
+      form.querySelector("input[name='id']").value = acc.id;
+      form.querySelector("input[name='account_code']").value = acc.account_code;
+      form.querySelector("input[name='account_name']").value = acc.account_name;
+      form.querySelector("select[name='account_type']").value = acc.account_type;
+      form.querySelector("select[name='category']").value = acc.category;
+      form.querySelector("textarea[name='description']").value = acc.description || "";
+      form.querySelector("input[name='balance']").value = acc.balance || 0;
 
-  openEditModal();
-}
-
+      openEditModal();
+    } catch (err) {
+      console.error("Error loading account:", err);
+      showToast("Failed to load account", "error");
+    }
+  }
 
   document.getElementById("editAccountForm").addEventListener("submit", async function(e) {
-  e.preventDefault();
-  const formData = Object.fromEntries(new FormData(this).entries());
+    e.preventDefault();
+    const formData = Object.fromEntries(new FormData(this).entries());
 
-  const res = await fetch(`${API_URL}?id=${formData.id}`, { // ✅ add id in query string
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(formData)
+    try {
+      const res = await fetch(`${API_URL}?id=${formData.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      });
+
+      const result = await res.json();
+      if (result.success) {
+        showToast("Account updated successfully!", "success");
+        closeEditModal();
+        loadAccounts();
+      } else {
+        showToast(result.message || "Failed to update account", "error");
+      }
+    } catch (err) {
+      console.error("Error updating account:", err);
+      showToast("Error updating account", "error");
+    }
   });
 
-  if (res.ok) {
-    showToast("Account updated successfully!", "success");
-    closeEditModal();
-    loadAccounts();
-  } else {
-    showToast("Failed to update account", "error");
-  }
-});
-
-
-  // ===================== VIEW =====================
-  async function viewAccount(id) {
-    const res = await fetch(`${API_URL}?id=${id}`);
-    const acc = await res.json();
-
-    document.getElementById("viewContent").innerHTML = `
-      <p><b>Code:</b> ${acc.account_code}</p>
-      <p><b>Name:</b> ${acc.account_name}</p>
-      <p><b>Account Type:</b> ${acc.account_type || ''}</p>
-      <p><b>Category:</b> ${acc.category}</p>
-      <p><b>Description:</b> ${acc.description || ''}</p>
-      <p><b>Balance:</b> ₱${parseFloat(acc.balance || 0).toLocaleString()}</p>
-    `;
-
-    openViewModal();
-    showToast("Viewing account details", "success");
-  }
-
-  // ===================== MODALS =====================
-  function openAddModal() { document.getElementById("addModal").classList.replace("hidden", "flex"); }
-  function closeAddModal() { document.getElementById("addModal").classList.replace("flex", "hidden"); }
-  function openEditModal() { document.getElementById("editModal").classList.replace("hidden", "flex"); }
-  function closeEditModal() { document.getElementById("editModal").classList.replace("flex", "hidden"); }
-  function openViewModal() { document.getElementById("viewModal").classList.replace("hidden", "flex"); }
-  function closeViewModal() { document.getElementById("viewModal").classList.replace("flex", "hidden"); }
-
-  // Export
-  function exportAccounts() { window.open(API_URL, "_blank"); }
-
-  // Load on page start
-  loadAccounts();
-
-  //Delete
+  // Delete Account
   let deleteId = null;
 
   function confirmDelete(id) {
     deleteId = id;
     document.getElementById("deleteMessage").innerText =
-      "Are you sure you want to delete Account ID #" + id + "?";
+      "Are you sure you want to delete Account ID #" + id + "? This action cannot be undone.";
     openDeleteModal();
   }
 
   async function deleteAccount() {
     if (!deleteId) return;
 
-    const res = await fetch(`${API_URL}?id=${deleteId}`, {
-      method: "DELETE"
-    });
+    try {
+      const res = await fetch(`${API_URL}?id=${deleteId}`, {
+        method: "DELETE"
+      });
 
-    if (res.ok) {
-      showToast("Account deleted successfully!", "success");
-      closeDeleteModal();
-      loadAccounts();
-    } else {
-      showToast("Failed to delete account", "error");
+      const result = await res.json();
+      if (result.success) {
+        showToast("Account deleted successfully!", "success");
+        closeDeleteModal();
+        loadAccounts();
+      } else {
+        showToast(result.message || "Failed to delete account", "error");
+      }
+    } catch (err) {
+      console.error("Error deleting account:", err);
+      showToast("Error deleting account", "error");
     }
   }
 
-  function openDeleteModal() { 
-    document.getElementById("deleteModal").classList.replace("hidden", "flex"); 
+  // Modal Functions
+  function openAddModal() {
+    document.getElementById("addModal").classList.remove("hidden");
+    document.getElementById("addModal").classList.add("flex");
   }
-  function closeDeleteModal() { 
-    document.getElementById("deleteModal").classList.replace("flex", "hidden"); 
+
+  function closeAddModal() {
+    document.getElementById("addModal").classList.add("hidden");
+    document.getElementById("addModal").classList.remove("flex");
+    document.getElementById("addAccountForm").reset();
+  }
+
+  function openEditModal() {
+    document.getElementById("editModal").classList.remove("hidden");
+    document.getElementById("editModal").classList.add("flex");
+  }
+
+  function closeEditModal() {
+    document.getElementById("editModal").classList.add("hidden");
+    document.getElementById("editModal").classList.remove("flex");
+  }
+
+  function openDeleteModal() {
+    document.getElementById("deleteModal").classList.remove("hidden");
+    document.getElementById("deleteModal").classList.add("flex");
+  }
+
+  function closeDeleteModal() {
+    document.getElementById("deleteModal").classList.add("hidden");
+    document.getElementById("deleteModal").classList.remove("flex");
     deleteId = null;
   }
-</script>
 
-<link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  // Load accounts on page load
+  loadAccounts();
+</script>

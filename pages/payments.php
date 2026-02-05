@@ -68,8 +68,8 @@ $children = '
 </main>
 
 <!-- Add/Edit Payment Modal -->
-<div id="paymentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-  <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+<div id="paymentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-lg max-h-screen overflow-y-auto p-6 relative">
     <h2 class="text-xl font-bold mb-4" id="modalTitle">Add New Payment</h2>
     <form id="paymentForm">
       <input type="hidden" name="id" id="paymentId">
@@ -119,8 +119,8 @@ $children = '
 </div>
 
 <!-- View Modal -->
-<div id="viewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-  <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+<div id="viewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md max-h-screen overflow-y-auto p-6 relative">
     <h2 class="text-xl font-bold mb-4">Payment Details</h2>
     <div id="viewContent" class="space-y-2 text-slate-700"></div>
     <div class="flex justify-end mt-4">
@@ -130,8 +130,8 @@ $children = '
 </div>
 
 <!-- Approve Payment Modal -->
-<div id="approveModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-  <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+<div id="approveModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md max-h-screen overflow-y-auto p-6 relative">
     <h2 class="text-xl font-bold mb-4">Approve Payment</h2>
     <div id="approveContent" class="space-y-2 text-slate-700"></div>
     
@@ -183,8 +183,8 @@ $children = '
         <td class="px-4 py-3">${payment.payment_date}</td>
         <td class="px-4 py-3">${payment.mode_of_payment || "-"}</td>
         <td class="px-4 py-3">${payment.release_date || "-"}</td>
-        <td class="px-4 py-3 text-red-600">₱${parseFloat(payment.amount).toLocaleString()}</td>
-        <td class="px-4 py-3 blur-sm">${payment.received_by || "-"}</td>
+        <td class="px-4 py-3 text-red-600 blur-sm">₱${parseFloat(payment.amount).toLocaleString()}</td>
+        <td class="px-4 py-3">${payment.received_by || "-"}</td>
         <td class="px-4 py-3 ${payment.status === "Completed" ? "text-green-600" : "text-yellow-600"}">${payment.status}</td>
         <td class="px-4 py-3 text-right space-x-2">
           ${payment.status === "Pending" 

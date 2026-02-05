@@ -34,7 +34,6 @@ $children = '
             <th class="px-4 py-3">Department</th>
             <th class="px-4 py-3">Purpose</th>
             <th class="px-4 py-3">Amount</th>
-            <th class="px-4 py-3">Amount Limit</th>
             <th class="px-4 py-3">Status</th>
             <th class="px-4 py-3">Date</th>
             <th class="px-4 py-3 text-right">Actions</th>
@@ -48,8 +47,8 @@ $children = '
 </main>
 
 <!-- Modal for New Request -->
-<div id="requestModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-  <div class="bg-white rounded-xl p-6 w-full max-w-lg shadow-lg">
+<div id="requestModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-xl p-6 w-full max-w-lg max-h-screen overflow-y-auto shadow-lg">
     <h2 class="text-xl font-semibold mb-4">New Budget Request</h2>
     <form id="requestForm" class="space-y-4">
       <div>
@@ -70,11 +69,8 @@ $children = '
       </div>
       <div>
         <label class="block text-sm font-medium text-slate-600">Amount</label>
-        <input type="number" id="amount" class="w-full border rounded-lg px-3 py-2 mt-1" required>
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-slate-600">Amount Limit (Breakdown)</label>
-        <input type="number" id="amount_limit" class="w-full border rounded-lg px-3 py-2 mt-1" placeholder="Max amount allowed">
+        <input type="number" id="amount" class="w-full border rounded-lg px-3 py-2 mt-1" min="0" max="100000" required>
+        <p class="text-xs text-slate-500 mt-1">Maximum limit: ₱100,000</p>
       </div>
       <div>
         <label class="block text-sm font-medium text-slate-600">Attendance Required</label>
@@ -115,8 +111,8 @@ $children = '
 </div>
 
 <!-- Approve Modal -->
-<div id="approveModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-  <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+<div id="approveModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md max-h-screen overflow-y-auto p-6 relative">
     <h2 class="text-lg font-bold mb-4">Approve Budget Request</h2>
     <div id="approveContent" class="space-y-2 text-sm"></div>
     
@@ -138,8 +134,8 @@ $children = '
 </div>
 
 <!-- Delete Confirmation Modal -->
-<div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-  <div class="bg-white rounded-lg shadow-lg w-full max-w-md">
+<div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md max-h-screen overflow-y-auto">
     <div class="p-6">
       <h2 class="text-lg font-semibold text-gray-700">Delete Request</h2>
       <p class="text-sm text-gray-500 mt-2">Are you sure you want to delete this request? This action cannot be undone.</p>
@@ -194,7 +190,6 @@ async function loadRequests() {
           <td class="px-4 py-3">${req.department}</td>
           <td class="px-4 py-3">${req.purpose}</td>
           <td class="px-4 py-3 text-green-600">₱${parseFloat(req.amount).toLocaleString()}</td>
-          <td class="px-4 py-3">${req.amount_limit ? '₱' + parseFloat(req.amount_limit).toLocaleString() : '-'}</td>
           <td class="px-4 py-3">${req.status || "Pending"}</td>
           <td class="px-4 py-3">${req.request_date || "-"}</td>
           <td class="px-4 py-3 text-right">${actions}</td>
@@ -271,7 +266,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const department = document.getElementById("department").value.trim();
     const purpose = document.getElementById("purpose").value.trim();
     const amount = document.getElementById("amount").value.trim();
-    const amount_limit = document.getElementById("amount_limit").value.trim();
     const attendance_required = document.getElementById("attendance_required").value;
     const item_list = document.getElementById("item_list").value.trim();
     const approval_required = document.getElementById("approval_required").value;
@@ -283,12 +277,18 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // Validate amount does not exceed 100,000
+    if (parseFloat(amount) > 100000) {
+      showToast("Amount cannot exceed ₱100,000.", "error");
+      return;
+    }
+
     try {
-      console.log("Submitting to API:", { department, purpose, amount, amount_limit, attendance_required, item_list, approval_required, requesting_account, approval_account });
+      console.log("Submitting to API:", { department, purpose, amount, attendance_required, item_list, approval_required, requesting_account, approval_account });
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ department, purpose, amount, amount_limit, attendance_required, item_list, approval_required, requesting_account, approval_account })
+        body: JSON.stringify({ department, purpose, amount, attendance_required, item_list, approval_required, requesting_account, approval_account })
       });
 
       const result = await response.json();
@@ -415,7 +415,6 @@ document.getElementById("confirmApproveBtn").addEventListener("click", async () 
         department: approveRequestData.department,
         purpose: approveRequestData.purpose,
         amount: approveRequestData.amount,
-        amount_limit: approveRequestData.amount_limit || null,
         attendance_required: approveRequestData.attendance_required || null,
         item_list: approveRequestData.item_list || null,
         approval_required: approveRequestData.approval_required || null,

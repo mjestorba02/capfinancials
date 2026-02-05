@@ -122,8 +122,8 @@ $children = '
 </div>
 
 <!-- Modal -->
-<div id="addReceivableModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-  <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+<div id="addReceivableModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md max-h-screen overflow-y-auto p-6 relative">
     <h2 class="text-xl font-bold mb-4">Add Receivable</h2>
     <form class="space-y-4">
       <div>

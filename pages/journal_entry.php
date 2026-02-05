@@ -53,8 +53,8 @@ $children = '
 </div>
 
 <!-- Add Journal Entry Modal -->
-<div id="addJournalModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-  <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 relative">
+<div id="addJournalModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-lg max-h-screen overflow-y-auto p-6 relative">
     <h2 class="text-xl font-bold mb-4">Add New Journal Entry</h2>
     <form id="addJournalForm" class="space-y-4">
       <div>
@@ -89,8 +89,8 @@ $children = '
 </div>
 
 <!-- View Journal Entry Modal -->
-<div id="viewJournalModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-  <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 relative">
+<div id="viewJournalModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md max-h-screen overflow-y-auto p-6 relative">
     <h2 class="text-xl font-bold mb-4">Journal Entry Details</h2>
     <div id="viewJournalDetails" class="space-y-2 text-sm"></div>
     <div class="flex justify-end mt-6">
@@ -100,8 +100,8 @@ $children = '
 </div>
 
 <!-- Delete Journal Entry Modal -->
-<div id="deleteJournalModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-  <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+<div id="deleteJournalModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md max-h-screen overflow-y-auto p-6 relative">
     <h2 class="text-xl font-bold mb-4">Delete Journal Entry</h2>
     <p class="text-sm text-slate-600 mb-6">Are you sure you want to delete this journal entry?</p>
     <div class="flex justify-end space-x-3">
