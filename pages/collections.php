@@ -12,7 +12,7 @@ $children = '
       <p class="text-sm text-slate-500">Manage and track your collections</p>
     </div>
     <!-- <button onclick="openAddModal()" class="bg-orange-500 hover:bg-orange-600 text-white text-sm px-4 py-2 rounded-lg shadow">
-      + Add Collection
+      + Add Collections
     </button> -->
   </div>
 
