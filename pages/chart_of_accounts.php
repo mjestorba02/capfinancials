@@ -191,7 +191,7 @@ adminLayout($children);
 <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
 
 <script>
-  const API_URL = "http://localhost/financial2/api/chart_of_accounts_api.php";
+  const API_URL = "https://financial.health-ease-hospital.com/api/chart_of_accounts_api.php";
 
   // Toast Function
   function showToast(message, type) {

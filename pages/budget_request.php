@@ -153,7 +153,7 @@ adminLayout($children);
 ?>
 <<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 <script>
-const apiUrl = "http://localhost/financial2/api/budget_requests_api.php";
+const apiUrl = "https://financial.health-ease-hospital.com/api/budget_requests_api.php";
 
 // Toast helper
 function showToast(message, type) {
@@ -239,7 +239,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Load accounts to populate requesting/approval account selects
   async function loadAccountsForSelects() {
     try {
-      const res = await fetch('http://localhost/financial2/api/chart_of_accounts_api.php');
+      const res = await fetch('https://financial.health-ease-hospital.com/api/chart_of_accounts_api.php');
       const data = await res.json();
       const reqSelect = document.getElementById('requesting_account');
       const aprSelect = document.getElementById('approval_account');

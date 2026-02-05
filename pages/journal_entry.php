@@ -120,7 +120,7 @@ adminLayout($children);
 ?>
 
 <script>
-const journalApiUrl = "http://localhost/financial2/api/journal.php";
+const journalApiUrl = "https://financial.health-ease-hospital.com/api/journal.php";
 
 // ===================== LOAD JOURNAL =====================
 async function loadJournal() {
